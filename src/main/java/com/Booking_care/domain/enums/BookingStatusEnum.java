@@ -1,6 +1,6 @@
 package com.Booking_care.domain.enums;
 
-public enum BookingStatus {
+public enum BookingStatusEnum {
     PENDING("Chờ xác nhận"),
     CONFIRMED("Đã xác nhận"),
     CANCELLED("Đã hủy"),
@@ -8,7 +8,7 @@ public enum BookingStatus {
 
     private final String label;
 
-    BookingStatus(String label) {
+    BookingStatusEnum(String label) {
         this.label = label;
     }
 

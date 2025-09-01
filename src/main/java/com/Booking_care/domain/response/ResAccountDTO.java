@@ -3,6 +3,8 @@ package com.Booking_care.domain.response;
 import java.time.Instant;
 import java.time.LocalDate;
 
+import com.Booking_care.domain.enums.GenderEnum;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +19,7 @@ public class ResAccountDTO {
     private String name;
     private String email;
     private String phoneNumber;
-    private String gender;
+    private GenderEnum gender;
     private String address;
     private LocalDate birth;
     private Instant createAt;
@@ -30,7 +32,7 @@ public class ResAccountDTO {
     @Setter
     @AllArgsConstructor
     @NoArgsConstructor
-    private static class RoleAccount {
+    public static class RoleAccount {
         private long id;
         private String name;
     }

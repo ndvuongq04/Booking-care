@@ -1,13 +1,13 @@
 package com.Booking_care.domain.enums;
 
-public enum BillStatus {
+public enum BillStatusEnum {
     UNPAID("Chưa thanh toán"),
     PAID("Đã thanh toán"),
     CANCELLED("Đã hủy");
 
     private final String label;
 
-    BillStatus(String label) {
+    BillStatusEnum(String label) {
         this.label = label;
     }
 

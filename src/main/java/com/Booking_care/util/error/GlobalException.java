@@ -1,9 +1,18 @@
 package com.Booking_care.util.error;
 
+import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.Booking_care.domain.response.RestResponse;
 
@@ -21,4 +30,31 @@ public class GlobalException {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
 
+    // valid form, field search
+    @ExceptionHandler({ MethodArgumentNotValidException.class, BindException.class })
+    public ResponseEntity<RestResponse<Object>> validationError(Exception ex) {
+        BindingResult result;
+
+        if (ex instanceof MethodArgumentNotValidException manve) {
+            result = manve.getBindingResult();
+        } else if (ex instanceof BindException be) {
+            result = be.getBindingResult();
+        } else {
+            throw new IllegalArgumentException("Unexpected exception type: " + ex.getClass());
+        }
+
+        List<FieldError> fieldErrors = result.getFieldErrors();
+
+        RestResponse<Object> res = new RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError("Invalid parameter");
+
+        List<String> errors = fieldErrors.stream()
+                .map(FieldError::getDefaultMessage)
+                .toList();
+
+        res.setMessage(errors.size() > 1 ? errors : errors.get(0));
+
+        return ResponseEntity.badRequest().body(res);
+    }
 }

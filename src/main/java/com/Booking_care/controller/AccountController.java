@@ -2,10 +2,31 @@ package com.Booking_care.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import com.Booking_care.domain.Account;
+import com.Booking_care.domain.dto.accountDTO.AccountCriteriaDTO;
+import com.Booking_care.domain.dto.accountDTO.CreateAccountDTO;
+import com.Booking_care.domain.dto.accountDTO.UpdateAccountDTO;
+import com.Booking_care.domain.response.ResAccountDTO;
+import com.Booking_care.domain.response.ResCreateAccountDTO;
+import com.Booking_care.domain.response.ResUpdateAccountDTO;
+import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.AccountService;
+import com.Booking_care.util.annotation.ApiMessage;
+import com.Booking_care.util.error.IdInvalidException;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -17,10 +38,76 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    @PostMapping("/account")
-    public String createNewAccount(@RequestBody String entity) {
+    @PostMapping("/accounts")
+    @ApiMessage("Create new account")
+    public ResponseEntity<ResCreateAccountDTO> createNewAccount(@Valid @RequestBody CreateAccountDTO reqAccount)
+            throws IdInvalidException {
+        boolean isEmailExits = this.accountService.isEmailExits(reqAccount.getEmail());
 
-        return entity;
+        if (isEmailExits) {
+            throw new IdInvalidException(
+                    "Email " + reqAccount.getEmail() + " đã tồn tại, Vui lòng sử dụng email khác.");
+        }
+
+        Account acc = this.accountService.handleCreateAccount(reqAccount);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(this.accountService.convertToResCreateAccountDTO(acc));
+    }
+
+    @GetMapping("/accounts/{id}")
+    @ApiMessage("Fetch account by id")
+    public ResponseEntity<ResAccountDTO> getAccountById(@PathVariable("id") long id) throws IdInvalidException {
+        Account acc = this.accountService.fetchAccountById(id);
+
+        if (acc == null) {
+            throw new IdInvalidException("Account với id " + id + " không tồn tại");
+        }
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(this.accountService.convertToResAccountDTO(acc));
+    }
+
+    @PutMapping("/accounts")
+    @ApiMessage("Update a account")
+    public ResponseEntity<ResUpdateAccountDTO> updateAccount(@Valid @RequestBody UpdateAccountDTO reqAcc)
+            throws IdInvalidException {
+        Account acc = this.accountService.handleUpdateAccount(reqAcc);
+
+        if (acc == null) {
+            throw new IdInvalidException("Account với id " + reqAcc.getId() + " không tồn tại");
+        }
+        return ResponseEntity.ok(this.accountService.convertToResUpdateAccountDTO(acc));
+    }
+
+    @DeleteMapping("accounts/{id}")
+    @ApiMessage("Delete a account")
+    public ResponseEntity<Void> deleteAccountById(@PathVariable("id") long id) throws IdInvalidException {
+        Account acc = this.accountService.fetchAccountById(id);
+
+        if (acc == null) {
+            throw new IdInvalidException("Account với id " + id + " không tồn tại");
+        }
+        this.accountService.handleDeleteAccount(id);
+
+        return ResponseEntity.ok(null);
+    }
+
+    @GetMapping("/accounts")
+    @ApiMessage("Fetch all account")
+    public ResponseEntity<ResultPaginationDTO> getAllAccount(
+            Pageable pageable) {
+        ResultPaginationDTO result = this.accountService.fetchAllAccount(pageable);
+        return ResponseEntity.ok().body(result);
+    }
+
+    @GetMapping("accounts/search")
+    public ResponseEntity<ResultPaginationDTO> searchAndFilter(
+            @Valid @ModelAttribute AccountCriteriaDTO accountCriteriaDTO,
+            Pageable pageable) {
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(this.accountService.getAccountSearch(accountCriteriaDTO, pageable));
+
     }
 
 }

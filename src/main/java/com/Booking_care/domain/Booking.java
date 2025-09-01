@@ -2,7 +2,7 @@ package com.Booking_care.domain;
 
 import java.time.Instant;
 
-import com.Booking_care.domain.enums.BookingStatus;
+import com.Booking_care.domain.enums.BookingStatusEnum;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -24,7 +24,7 @@ public class Booking {
     private String description;
     private Instant createAt;
     private Instant updateAt;
-    private BookingStatus status; // dùng enum thay vì String
+    private BookingStatusEnum status; // dùng enum thay vì String
 
     // Doctor
     @ManyToOne
@@ -46,7 +46,7 @@ public class Booking {
     @JoinColumn(name = "time_id")
     private Time time;
 
-    public Booking(long id, String description, Instant createAt, Instant updateAt, BookingStatus status) {
+    public Booking(long id, String description, Instant createAt, Instant updateAt, BookingStatusEnum status) {
         this.id = id;
         this.description = description;
         this.createAt = createAt;
@@ -99,11 +99,11 @@ public class Booking {
         this.updateAt = updateAt;
     }
 
-    public BookingStatus getStatus() {
+    public BookingStatusEnum getStatus() {
         return status;
     }
 
-    public void setStatus(BookingStatus status) {
+    public void setStatus(BookingStatusEnum status) {
         this.status = status;
     }
 

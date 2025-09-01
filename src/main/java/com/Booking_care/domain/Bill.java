@@ -1,6 +1,6 @@
 package com.Booking_care.domain;
 
-import com.Booking_care.domain.enums.BillStatus;
+import com.Booking_care.domain.enums.BillStatusEnum;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -27,7 +27,7 @@ public class Bill {
     private BigDecimal totalBill;
     private Instant createAt;
     private Instant updateAt;
-    private BillStatus status; // trạng thái hóa đơn
+    private BillStatusEnum status; // trạng thái hóa đơn
 
     // Patient
     @ManyToOne
@@ -48,7 +48,8 @@ public class Bill {
     @OneToMany(mappedBy = "bill")
     private List<BillDetail> billDetails;
 
-    public Bill(long id, BigDecimal totalBill, Instant createAt, Instant updateAt, BillStatus status, Patient patient,
+    public Bill(long id, BigDecimal totalBill, Instant createAt, Instant updateAt, BillStatusEnum status,
+            Patient patient,
             MedicalRecord medicalRecord, Support support) {
         this.id = id;
         this.totalBill = totalBill;
@@ -105,11 +106,11 @@ public class Bill {
         this.updateAt = updateAt;
     }
 
-    public BillStatus getStatus() {
+    public BillStatusEnum getStatus() {
         return status;
     }
 
-    public void setStatus(BillStatus status) {
+    public void setStatus(BillStatusEnum status) {
         this.status = status;
     }
 
