@@ -10,12 +10,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.Booking_care.domain.Account;
-import com.Booking_care.domain.dto.accountDTO.AccountCriteriaDTO;
-import com.Booking_care.domain.dto.accountDTO.CreateAccountDTO;
-import com.Booking_care.domain.dto.accountDTO.UpdateAccountDTO;
+import com.Booking_care.domain.Role;
+import com.Booking_care.domain.request.accountDTO.AccountCriteriaDTO;
+import com.Booking_care.domain.request.accountDTO.CreateAccountDTO;
+import com.Booking_care.domain.request.accountDTO.UpdateAccountDTO;
 import com.Booking_care.domain.response.ResAccountDTO;
-import com.Booking_care.domain.response.ResCreateAccountDTO;
-import com.Booking_care.domain.response.ResUpdateAccountDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.AccountRepository;
 import com.Booking_care.service.specification.AccountSpecs;
@@ -23,9 +22,12 @@ import com.Booking_care.service.specification.AccountSpecs;
 @Service
 public class AccountService {
     private final AccountRepository accountRepository;
+    private final RoleService roleService;
 
-    public AccountService(AccountRepository accountRepository) {
+    public AccountService(AccountRepository accountRepository,
+            RoleService roleService) {
         this.accountRepository = accountRepository;
+        this.roleService = roleService;
     }
 
     public boolean isEmailExits(String email) {
@@ -33,9 +35,6 @@ public class AccountService {
     }
 
     public Account handleCreateAccount(CreateAccountDTO dto) {
-        // if(acc.getRole() != null){
-
-        // }
         Account acc = new Account();
         acc.setName(dto.getName());
         acc.setEmail(dto.getEmail());
@@ -45,23 +44,13 @@ public class AccountService {
         acc.setGender(dto.getGender());
         acc.setCccd(dto.getCccd());
 
+        // set role
+        if (dto.getRoleId() != null) {
+            Role role = this.roleService.fetchRoleById(dto.getRoleId());
+            acc.setRole(role != null ? role : null);
+        }
+
         return this.accountRepository.save(acc);
-    }
-
-    public ResCreateAccountDTO convertToResCreateAccountDTO(Account acc) {
-        ResCreateAccountDTO res = new ResCreateAccountDTO();
-
-        res.setId(acc.getId());
-        res.setName(acc.getName());
-        res.setPhoneNumber(acc.getPhoneNumber());
-        res.setEmail(acc.getEmail());
-        res.setGender(acc.getGender());
-        res.setAddress(acc.getAddress());
-        res.setBirth(acc.getBirth());
-        res.setCccd(acc.getCccd());
-        res.setCreateAt(acc.getCreateAt());
-
-        return res;
     }
 
     public ResultPaginationDTO fetchAllAccount(Pageable pageable) {
@@ -129,37 +118,15 @@ public class AccountService {
             currentAcc.setGender(acc.getGender());
             currentAcc.setCccd(acc.getCccd());
 
-            // if (acc.getRole() != null) {
-
-            // }
-
-            // update
+            // set role
+            if (acc.getRoleId() != null) {
+                Role role = this.roleService.fetchRoleById(acc.getRoleId());
+                currentAcc.setRole(role != null ? role : null);
+            }
             currentAcc = this.accountRepository.save(currentAcc);
         }
 
         return currentAcc; // null
-    }
-
-    public ResUpdateAccountDTO convertToResUpdateAccountDTO(Account acc) {
-        ResUpdateAccountDTO res = new ResUpdateAccountDTO();
-        ResUpdateAccountDTO.RoleAccount roleAccount = new ResUpdateAccountDTO.RoleAccount();
-
-        if (acc.getRole() != null) {
-            roleAccount.setId(acc.getRole().getId());
-            roleAccount.setName(acc.getRole().getName());
-            res.setRoleAccount(roleAccount);
-        }
-
-        res.setId(acc.getId());
-        res.setName(acc.getName());
-        res.setPhoneNumber(acc.getPhoneNumber());
-        res.setGender(acc.getGender());
-        res.setAddress(acc.getAddress());
-        res.setBirth(acc.getBirth());
-        res.setCccd(acc.getCccd());
-        res.setUpdateAt(acc.getUpdateAt());
-
-        return res;
     }
 
     public void handleDeleteAccount(long id) {

@@ -1,4 +1,4 @@
-package com.Booking_care.domain.dto.accountDTO;
+package com.Booking_care.domain.request.accountDTO;
 
 import java.time.YearMonth;
 

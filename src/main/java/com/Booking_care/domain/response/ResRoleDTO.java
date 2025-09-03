@@ -5,16 +5,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
 @Setter
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RestResponse<T> {
-    private int statusCode;
-    private String error;
-
-    // message có thể là string, hoặc arrayList
-    private Object message;
-    private T data;
-
+public class ResRoleDTO {
+    private long id;
+    private String name;
+    private String description;
 }

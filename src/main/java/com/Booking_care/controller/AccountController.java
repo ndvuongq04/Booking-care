@@ -3,19 +3,15 @@ package com.Booking_care.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.Account;
-import com.Booking_care.domain.dto.accountDTO.AccountCriteriaDTO;
-import com.Booking_care.domain.dto.accountDTO.CreateAccountDTO;
-import com.Booking_care.domain.dto.accountDTO.UpdateAccountDTO;
+import com.Booking_care.domain.Role;
+import com.Booking_care.domain.request.accountDTO.AccountCriteriaDTO;
+import com.Booking_care.domain.request.accountDTO.CreateAccountDTO;
+import com.Booking_care.domain.request.accountDTO.UpdateAccountDTO;
 import com.Booking_care.domain.response.ResAccountDTO;
-import com.Booking_care.domain.response.ResCreateAccountDTO;
-import com.Booking_care.domain.response.ResUpdateAccountDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.AccountService;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
-import java.util.List;
-import java.util.stream.Collectors;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -40,7 +36,7 @@ public class AccountController {
 
     @PostMapping("/accounts")
     @ApiMessage("Create new account")
-    public ResponseEntity<ResCreateAccountDTO> createNewAccount(@Valid @RequestBody CreateAccountDTO reqAccount)
+    public ResponseEntity<ResAccountDTO> createNewAccount(@Valid @RequestBody CreateAccountDTO reqAccount)
             throws IdInvalidException {
         boolean isEmailExits = this.accountService.isEmailExits(reqAccount.getEmail());
 
@@ -51,7 +47,7 @@ public class AccountController {
 
         Account acc = this.accountService.handleCreateAccount(reqAccount);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(this.accountService.convertToResCreateAccountDTO(acc));
+                .body(this.accountService.convertToResAccountDTO(acc));
     }
 
     @GetMapping("/accounts/{id}")
@@ -69,14 +65,15 @@ public class AccountController {
 
     @PutMapping("/accounts")
     @ApiMessage("Update a account")
-    public ResponseEntity<ResUpdateAccountDTO> updateAccount(@Valid @RequestBody UpdateAccountDTO reqAcc)
+    public ResponseEntity<ResAccountDTO> updateAccount(@Valid @RequestBody UpdateAccountDTO reqAcc)
             throws IdInvalidException {
         Account acc = this.accountService.handleUpdateAccount(reqAcc);
 
         if (acc == null) {
             throw new IdInvalidException("Account với id " + reqAcc.getId() + " không tồn tại");
         }
-        return ResponseEntity.ok(this.accountService.convertToResUpdateAccountDTO(acc));
+
+        return ResponseEntity.ok(this.accountService.convertToResAccountDTO(acc));
     }
 
     @DeleteMapping("accounts/{id}")

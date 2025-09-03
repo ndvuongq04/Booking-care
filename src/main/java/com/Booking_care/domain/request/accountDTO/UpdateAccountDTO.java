@@ -1,4 +1,4 @@
-package com.Booking_care.domain.dto.accountDTO;
+package com.Booking_care.domain.request.accountDTO;
 
 import com.Booking_care.domain.enums.GenderEnum;
 
@@ -27,4 +27,5 @@ public class UpdateAccountDTO {
     private String address;
     private GenderEnum gender;
     private String cccd;
+    private Long roleId;
 }
