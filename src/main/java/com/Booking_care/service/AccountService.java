@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.Booking_care.domain.Account;
@@ -23,11 +24,14 @@ import com.Booking_care.service.specification.AccountSpecs;
 public class AccountService {
     private final AccountRepository accountRepository;
     private final RoleService roleService;
+    private final PasswordEncoder passwordEncoder;
 
     public AccountService(AccountRepository accountRepository,
-            RoleService roleService) {
+            RoleService roleService,
+            PasswordEncoder passwordEncoder) {
         this.accountRepository = accountRepository;
         this.roleService = roleService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public boolean isEmailExits(String email) {
@@ -38,7 +42,7 @@ public class AccountService {
         Account acc = new Account();
         acc.setName(dto.getName());
         acc.setEmail(dto.getEmail());
-        acc.setPassword(dto.getPassword()); // chưa hash password
+        acc.setPassword(this.passwordEncoder.encode(dto.getPassword()));
         acc.setPhoneNumber(dto.getPhoneNumber());
         acc.setAddress(dto.getAddress());
         acc.setGender(dto.getGender());
