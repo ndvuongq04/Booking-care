@@ -15,12 +15,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.Booking_care.domain.response.RestResponse;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 @RestControllerAdvice
 public class GlobalException {
 
     @ExceptionHandler(value = {
             IdInvalidException.class,
+            UsernameNotFoundException.class,
     })
     public ResponseEntity<RestResponse<Object>> handleIdException(Exception ex) {
         RestResponse<Object> res = new RestResponse<Object>();

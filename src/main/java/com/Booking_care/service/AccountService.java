@@ -201,4 +201,8 @@ public class AccountService {
 
     }
 
+    public Account fetchAccountByEmail(String email) {
+        return this.accountRepository.findByEmail(email);
+    }
+
 }
