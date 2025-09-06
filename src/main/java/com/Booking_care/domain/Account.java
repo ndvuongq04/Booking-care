@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.Booking_care.domain.enums.GenderEnum;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -50,6 +51,9 @@ public class Account {
     private Instant createAt;
     private Instant updateAt;
     private String cccd;
+
+    @Column(columnDefinition = "MEDIUMTEXT")
+    private String refreshToken;
 
     // Role
     @ManyToOne

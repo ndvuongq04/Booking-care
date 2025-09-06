@@ -209,4 +209,16 @@ public class AccountService {
         return this.accountRepository.findByEmail(email);
     }
 
+    public void updateToken(String token, String email) {
+        Account acc = this.fetchAccountByEmail(email);
+        if (acc != null) {
+            acc.setRefreshToken(token);
+            this.accountRepository.save(acc);
+        }
+    }
+
+    public Account getAccountByRefreshTokenAndEmail(String token, String email) {
+        return this.accountRepository.findByRefreshTokenAndEmail(token, email);
+    }
+
 }
