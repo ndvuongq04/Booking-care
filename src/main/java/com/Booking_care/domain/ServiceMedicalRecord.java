@@ -22,7 +22,7 @@ public class ServiceMedicalRecord {
     // Service
     @ManyToOne
     @JoinColumn(name = "service_id")
-    private Service service;
+    private Services service;
 
     // MedicalRecord
     @ManyToOne
@@ -45,7 +45,7 @@ public class ServiceMedicalRecord {
     public ServiceMedicalRecord() {
     }
 
-    public ServiceMedicalRecord(long id, Service service, MedicalRecord medicalRecord, Instant createAt,
+    public ServiceMedicalRecord(long id, Services service, MedicalRecord medicalRecord, Instant createAt,
             Instant updateAt) {
         this.id = id;
         this.service = service;
@@ -62,11 +62,11 @@ public class ServiceMedicalRecord {
         this.id = id;
     }
 
-    public Service getService() {
+    public Services getService() {
         return service;
     }
 
-    public void setService(Service service) {
+    public void setService(Services service) {
         this.service = service;
     }
 

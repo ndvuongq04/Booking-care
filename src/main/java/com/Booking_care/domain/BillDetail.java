@@ -34,10 +34,10 @@ public class BillDetail {
     // Service
     @ManyToOne
     @JoinColumn(name = "service_id")
-    private Service service;
+    private Services service;
 
     public BillDetail(Long id, BigDecimal totalService, BigDecimal serviceCost, Integer quantity, Instant createAt,
-            Instant updateAt, Bill bill, Service service) {
+            Instant updateAt, Bill bill, Services service) {
         this.id = id;
         this.totalService = totalService;
         this.serviceCost = serviceCost;
@@ -117,11 +117,11 @@ public class BillDetail {
         this.bill = bill;
     }
 
-    public Service getService() {
+    public Services getService() {
         return service;
     }
 
-    public void setService(Service service) {
+    public void setService(Services service) {
         this.service = service;
     }
 
