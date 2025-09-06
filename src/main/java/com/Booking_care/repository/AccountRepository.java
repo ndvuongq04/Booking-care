@@ -13,4 +13,8 @@ public interface AccountRepository extends JpaRepository<Account, Long>, JpaSpec
 
     Page<Account> findAll(Specification<Account> spec, Pageable pageable);
 
+    Account findByEmail(String email);
+
+    Account findByRefreshTokenAndEmail(String token, String email);
+
 }
