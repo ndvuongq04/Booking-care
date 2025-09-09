@@ -19,31 +19,40 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@Entity
+@Table(name = "doctors")
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name = "doctors")
 public class Doctor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @NotNull(message = "Cost không được để trống")
+    @DecimalMin(value = "0", inclusive = false, message = "Cost phải lớn hơn 0")
     private BigDecimal cost;
+
     private Instant createAt;
     private Instant updateAt;
+
     @Enumerated(EnumType.STRING)
+    @NotNull(message = "Degree không được để trống")
     private DegreeEnum degree;
 
     // Account
     @OneToOne
     @JoinColumn(name = "account_id")
+    @NotNull(message = "Account không được để trống")
     private Account account;
 
     // Clinic
@@ -77,5 +86,4 @@ public class Doctor {
     public void handleBeforeUpdate() {
         this.updateAt = Instant.now();
     }
-
 }
