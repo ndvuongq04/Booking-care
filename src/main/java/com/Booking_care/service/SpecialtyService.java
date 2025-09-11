@@ -46,7 +46,7 @@ public class SpecialtyService {
             s.setName(dto.getName());
             s.setDescription(dto.getDescription());
             s.setImage(dto.getImage());
-            // s.setIsActive(dto.getIsActive());
+            s.setIsActive(dto.getIsActive());
 
             this.specialtyRepository.save(s);
         }
