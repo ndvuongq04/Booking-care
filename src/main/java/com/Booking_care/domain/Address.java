@@ -3,6 +3,8 @@ package com.Booking_care.domain;
 import java.time.Instant;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,6 +39,7 @@ public class Address {
 
     // Clinic
     @OneToMany(mappedBy = "address")
+    @JsonIgnore
     private List<Clinic> clinics;
 
     @PrePersist
