@@ -48,6 +48,7 @@ public class SecurityConfig {
         };
         http
                 .csrf(c -> c.disable())
+                .cors(Customizer.withDefaults())// cors cấu hình mặc định
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(whiteList).permitAll()
                         .anyRequest().authenticated())
