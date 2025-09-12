@@ -20,7 +20,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -48,6 +47,7 @@ public class Doctor {
     @Enumerated(EnumType.STRING)
     @NotNull(message = "Degree không được để trống")
     private DegreeEnum degree;
+    private Boolean isActive = true;
 
     // Account
     @OneToOne
@@ -58,11 +58,13 @@ public class Doctor {
     // Clinic
     @ManyToOne
     @JoinColumn(name = "clinic_id")
+    @NotNull(message = "Clinic không được để trống")
     private Clinic clinic;
 
     // Specialty
     @ManyToOne
     @JoinColumn(name = "specialty_id")
+    @NotNull(message = "Specialty không được để trống")
     private Specialty specialty;
 
     // Feedback
@@ -79,6 +81,10 @@ public class Doctor {
 
     @PrePersist
     public void handleBeforeCreate() {
+        if (isActive == null) {
+            isActive = true;
+        }
+
         this.createAt = Instant.now();
     }
 

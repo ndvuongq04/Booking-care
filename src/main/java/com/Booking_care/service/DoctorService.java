@@ -12,24 +12,26 @@ import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Specialty;
-import com.Booking_care.domain.response.ResAccountDTO;
+import com.Booking_care.domain.request.UpdateDoctorDTO;
 import com.Booking_care.domain.response.ResDoctorDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
-import com.Booking_care.repository.AccountRepository;
 import com.Booking_care.repository.DoctorRepository;
 
 @Service
 public class DoctorService {
     private final DoctorRepository doctorRepository;
-    private final AccountRepository accountRepository;
     private final AccountService accountService;
+    private final ClinicService clinicService;
+    private final SpecialtyService specialtyService;
 
     public DoctorService(DoctorRepository doctorRepository,
-            AccountRepository accountRepository,
-            AccountService accountService) {
+            AccountService accountService,
+            ClinicService clinicService,
+            SpecialtyService specialtyService) {
         this.doctorRepository = doctorRepository;
-        this.accountRepository = accountRepository;
+        this.clinicService = clinicService;
         this.accountService = accountService;
+        this.specialtyService = specialtyService;
     }
 
     public boolean isAccountExits(long id) {
@@ -37,11 +39,7 @@ public class DoctorService {
     }
 
     public Account fetchAccountById(long id) {
-        Optional<Account> acc = this.accountRepository.findById(id);
-        if (acc.isPresent()) {
-            return acc.get();
-        }
-        return null;
+        return this.accountService.fetchAccountById(id);
     }
 
     public Doctor handleCreateDoctor(Doctor doctor) {
@@ -56,10 +54,9 @@ public class DoctorService {
         res.setCreateAt(doctor.getCreateAt());
         res.setUpdateAt(doctor.getUpdateAt());
         res.setDegree(doctor.getDegree());
-        res.setAccount(this.accountService.convertToResAccountDTO(doctor.getAccount()));
-        // thiếu call clinic và specialty qua id -> lấy thông tin -> gán vào dto
-        res.setClinic(doctor.getClinic());
-        res.setSpecialty(doctor.getSpecialty());
+        res.setAccount(this.accountService.convertToResAccountDTO(this.fetchAccountById(doctor.getAccount().getId())));
+        res.setClinic(this.clinicService.fetchClinicById(doctor.getClinic().getId()));
+        res.setSpecialty(this.specialtyService.fetchSpecialtyById(doctor.getSpecialty().getId()));
 
         return res;
     }
@@ -72,23 +69,19 @@ public class DoctorService {
         return null;
     }
 
-    public Doctor handleUpdateDoctor(Doctor doctor) {
+    public Doctor handleUpdateDoctor(UpdateDoctorDTO doctor) {
         Doctor currentDoctor = this.fetchDoctorById(doctor.getId());
         if (currentDoctor != null) {
             currentDoctor.setCost(doctor.getCost());
             currentDoctor.setDegree(doctor.getDegree());
 
             if (doctor.getClinic() != null) {
-                // call api clinic , kta id của clinic có ok ko
-                Clinic clinic = new Clinic();
-                // set value
+                Clinic clinic = this.clinicService.fetchClinicById(doctor.getClinic().getId());
                 currentDoctor.setClinic(clinic != null ? clinic : null);
             }
 
             if (doctor.getSpecialty() != null) {
-                // call api Specialty , kta id của Specialty có ok ko
-                Specialty specialty = new Specialty();
-                // set value
+                Specialty specialty = this.specialtyService.fetchSpecialtyById(doctor.getSpecialty().getId());
                 currentDoctor.setSpecialty(specialty != null ? specialty : null);
             }
 
@@ -98,8 +91,9 @@ public class DoctorService {
         return currentDoctor;
     }
 
-    public void handleDeleteDoctor(long id) {
-        this.doctorRepository.deleteById(id);
+    public void handleDeleteDoctor(Doctor d) {
+        d.setIsActive(false);
+        this.doctorRepository.save(d);
     }
 
     public ResultPaginationDTO fetchAllDoctor(Pageable pageable) {
@@ -124,6 +118,11 @@ public class DoctorService {
         res.setMeta(meta);
 
         return res;
+    }
+
+    public boolean existsByAccountAndIdNot(Account a, long id) {
+        Account account = this.fetchAccountById(a.getId());
+        return this.doctorRepository.existsByAccountAndIdNot(account, id);
     }
 
 }
