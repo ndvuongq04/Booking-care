@@ -21,20 +21,14 @@ import com.Booking_care.repository.FeedbackRepository;
 public class FeedbackService {
     private final FeedbackRepository feedbackRepository;
     private final DoctorService doctorService;
-    private final DoctorRepository doctorRepository;
 
-    public FeedbackService(FeedbackRepository feedbackRepository, DoctorService doctorService, DoctorRepository doctorRepository) {
+    public FeedbackService(FeedbackRepository feedbackRepository, DoctorService doctorService) {
         this.feedbackRepository = feedbackRepository;
         this.doctorService = doctorService;
-        this.doctorRepository = doctorRepository;
     }
-    
+
     public Doctor fetchDoctorById(long id) {
-        Optional<Doctor> doctor = this.doctorRepository.findById(id);
-        if (doctor.isPresent()) {
-            return doctor.get();
-        }
-        return null;
+        return this.doctorService.fetchDoctorById(id);
     }
 
     public boolean isFeedbackExits(long id) {
@@ -80,10 +74,10 @@ public class FeedbackService {
         Feedback currentFeedback = this.fetchFeedbackById(feedback.getId());
         if (currentFeedback != null) {
             if (feedback.getDoctor() != null) {
-                Doctor doctor = new Doctor();
-                // set value
+                Doctor doctor = this.fetchDoctorById(feedback.getDoctor().getId());
                 currentFeedback.setDoctor(doctor != null ? doctor : null);
             }
+            currentFeedback.setRate(feedback.getRate());
             currentFeedback.setDescription(feedback.getDescription());
             currentFeedback = this.feedbackRepository.save(currentFeedback);
         }
@@ -93,7 +87,7 @@ public class FeedbackService {
     public void handleDeleteFeedback(long id) {
         this.feedbackRepository.deleteById(id);
     }
-    
+
     public ResFeedbackDTO convertToResFeedbackDTO(Feedback feedback) {
         ResFeedbackDTO res = new ResFeedbackDTO();
         res.setId(feedback.getId());

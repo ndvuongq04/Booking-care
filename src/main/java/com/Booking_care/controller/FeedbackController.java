@@ -43,7 +43,7 @@ public class FeedbackController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(this.feedbackService.convertToResFeedbackDTO(feedback));
     }
-    
+
     @GetMapping
     @ApiMessage("Fetch all feedback")
     public ResponseEntity<ResultPaginationDTO> fetchAllFeedback(
@@ -83,15 +83,16 @@ public class FeedbackController {
     @DeleteMapping("/{id}")
     @ApiMessage("Delete feedback by id")
     public ResponseEntity<Void> handleDeleteFeedback(@PathVariable("id") long id)
-    throws IdInvalidException {
-    Feedback feedback = this.feedbackService.fetchFeedbackById(id);
+            throws IdInvalidException {
+        Feedback feedback = this.feedbackService.fetchFeedbackById(id);
 
-    if (feedback == null) {
-    throw new IdInvalidException("Feedback với id " + id + " không tồn tại");
-    }
-    this.feedbackService.handleDeleteFeedback(id);;
+        if (feedback == null) {
+            throw new IdInvalidException("Feedback với id " + id + " không tồn tại");
+        }
+        this.feedbackService.handleDeleteFeedback(id);
+        ;
 
-    return ResponseEntity.status(HttpStatus.OK)
-    .body(null);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(null);
     }
 }
