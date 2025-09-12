@@ -56,6 +56,7 @@ public class NotificationController {
     }
 
     @PostMapping
+    @ApiMessage("Create a notification")
     public ResponseEntity<ResNotificationDTO> handleCreateNotification(@Valid @RequestBody Notification notification)
             throws IdInvalidException {
 
@@ -69,32 +70,33 @@ public class NotificationController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(this.notificationService.convertToResNotificationDTO(notificationDB));
     }
-    
+
     @PutMapping
+    @ApiMessage("Update a notification")
     public ResponseEntity<ResNotificationDTO> handleUpdateNotification(@Valid @RequestBody Notification notification)
             throws IdInvalidException {
         Notification notificationDb = this.notificationService.handleUpdateNotification(notification);
 
         if (notificationDb == null) {
-            throw new IdInvalidException("Doctor với id " + notification.getId() + " không tồn tại");
+            throw new IdInvalidException("Notification với id " + notification.getId() + " không tồn tại");
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return ResponseEntity.status(HttpStatus.OK)
                 .body(this.notificationService.convertToResNotificationDTO(notificationDb));
     }
-    
+
     @DeleteMapping("/{id}")
     @ApiMessage("Delete notification by id")
     public ResponseEntity<Void> handleDeleteNotification(@PathVariable("id") long id)
-    throws IdInvalidException {
-    Notification notification = this.notificationService.fetchNotificationById(id);
+            throws IdInvalidException {
+        Notification notification = this.notificationService.fetchNotificationById(id);
 
-    if (notification == null) {
-    throw new IdInvalidException("Notification với id " + id + " không tồn tại");
-    }
-    this.notificationService.handleDeleteNotification(id);
+        if (notification == null) {
+            throw new IdInvalidException("Notification với id " + id + " không tồn tại");
+        }
+        this.notificationService.handleDeleteNotification(id);
 
-    return ResponseEntity.status(HttpStatus.OK)
-    .body(null);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(null);
     }
 }

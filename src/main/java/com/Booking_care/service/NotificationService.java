@@ -12,28 +12,22 @@ import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Notification;
 import com.Booking_care.domain.response.ResNotificationDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
-import com.Booking_care.repository.AccountRepository;
 import com.Booking_care.repository.NotificationRepository;
 
 @Service
 public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final AccountService accountService;
-    private final AccountRepository accountRepository;
 
-
-    public NotificationService(NotificationRepository notificationRepository, AccountService accountService, AccountRepository accountRepository) {
+    public NotificationService(NotificationRepository notificationRepository, AccountService accountService) {
         this.notificationRepository = notificationRepository;
         this.accountService = accountService;
-        this.accountRepository = accountRepository;
     }
+
     public Account fetchAccountById(long id) {
-        Optional<Account> acc = this.accountRepository.findById(id);
-        if (acc.isPresent()) {
-            return acc.get();
-        }
-        return null;
+        return this.accountService.fetchAccountById(id);
     }
+
     public boolean isNotificationExits(long id) {
         return this.notificationRepository.existsByAccountId(id);
     }
@@ -60,7 +54,7 @@ public class NotificationService {
 
         return res;
     }
-    
+
     public Notification fetchNotificationById(long id) {
         Optional<Notification> noti = this.notificationRepository.findById(id);
         if (noti.isPresent()) {
@@ -77,7 +71,7 @@ public class NotificationService {
         Notification currentNotification = this.fetchNotificationById(notification.getId());
         if (currentNotification != null) {
             if (notification.getAccount() != null) {
-                Account account = new Account();
+                Account account = this.fetchAccountById(notification.getAccount().getId());
                 // set value
                 currentNotification.setAccount(account != null ? account : null);
             }
