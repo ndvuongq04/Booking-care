@@ -1,6 +1,7 @@
 package com.Booking_care.domain;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 import com.Booking_care.domain.enums.BookingStatusEnum;
 
@@ -13,14 +14,22 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "bookings")
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-
+    private LocalDate appointmentDate; // ngày khám
     private String description;
     private Instant createAt;
     private Instant updateAt;
@@ -46,17 +55,6 @@ public class Booking {
     @JoinColumn(name = "time_id")
     private Time time;
 
-    public Booking(long id, String description, Instant createAt, Instant updateAt, BookingStatusEnum status) {
-        this.id = id;
-        this.description = description;
-        this.createAt = createAt;
-        this.updateAt = updateAt;
-        this.status = status;
-    }
-
-    public Booking() {
-    }
-
     @PrePersist
     public void handleBeforeCreate() {
         this.createAt = Instant.now();
@@ -66,77 +64,4 @@ public class Booking {
     public void handleBeforeUpdate() {
         this.updateAt = Instant.now();
     }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Instant getCreateAt() {
-        return createAt;
-    }
-
-    public void setCreateAt(Instant createAt) {
-        this.createAt = createAt;
-    }
-
-    public Instant getUpdateAt() {
-        return updateAt;
-    }
-
-    public void setUpdateAt(Instant updateAt) {
-        this.updateAt = updateAt;
-    }
-
-    public BookingStatusEnum getStatus() {
-        return status;
-    }
-
-    public void setStatus(BookingStatusEnum status) {
-        this.status = status;
-    }
-
-    public Doctor getDoctor() {
-        return doctor;
-    }
-
-    public void setDoctor(Doctor doctor) {
-        this.doctor = doctor;
-    }
-
-    public Patient getPatient() {
-        return patient;
-    }
-
-    public void setPatient(Patient patient) {
-        this.patient = patient;
-    }
-
-    public Clinic getClinic() {
-        return clinic;
-    }
-
-    public void setClinic(Clinic clinic) {
-        this.clinic = clinic;
-    }
-
-    public Time getTime() {
-        return time;
-    }
-
-    public void setTime(Time time) {
-        this.time = time;
-    }
-
 }
