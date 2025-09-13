@@ -3,34 +3,28 @@ package com.Booking_care.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Clinic;
-import com.Booking_care.domain.Doctor;
-import com.Booking_care.domain.Specialty;
 import com.Booking_care.domain.Support;
-import com.Booking_care.domain.response.ResAccountDTO;
-import com.Booking_care.domain.response.ResDoctorDTO;
 import com.Booking_care.domain.response.ResSupportDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
-import com.Booking_care.repository.AccountRepository;
 import com.Booking_care.repository.SupportRepository;
 
 @Service
 public class SupportService {
     private final SupportRepository supportRepository;
     private final AccountService accountService;
-    private final AccountRepository accountRepository;
+    private final ClinicService clinicService;
 
-    public SupportService(SupportRepository supportRepository, AccountService accountService,
-            AccountRepository accountRepository) {
+    public SupportService(SupportRepository supportRepository,
+            AccountService accountService,
+            ClinicService clinicService) {
         this.supportRepository = supportRepository;
         this.accountService = accountService;
-        this.accountRepository = accountRepository;
+        this.clinicService = clinicService;
     }
 
     public boolean isAccountExits(long id) {
@@ -38,11 +32,7 @@ public class SupportService {
     }
 
     public Account fetchAccountById(long id) {
-        Optional<Account> acc = this.accountRepository.findById(id);
-        if (acc.isPresent()) {
-            return acc.get();
-        }
-        return null;
+        return this.accountService.fetchAccountById(id);
     }
 
     public Support handleCreateSupport(Support support) {
@@ -71,15 +61,12 @@ public class SupportService {
         Support currentSupport = this.fetchSupportById(support.getId());
         if (currentSupport != null) {
 
-            // if (support.getClinic() != null) {
-            // // call api clinic , kta id của clinic có ok ko
-            // Clinic clinic = new Clinic();
-            // // set value
-            // currentSupport.setClinic(clinic != null ? clinic : null);
-            // }
+            if (support.getClinic() != null) {
+                Clinic clinic = this.clinicService.fetchClinicById(support.getClinic().getId());
+                currentSupport.setClinic(clinic != null ? clinic : null);
+            }
 
             currentSupport = this.supportRepository.save(currentSupport);
-
         }
         return currentSupport;
     }

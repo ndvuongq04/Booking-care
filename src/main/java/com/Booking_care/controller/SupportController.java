@@ -11,14 +11,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.Booking_care.domain.Account;
-import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Support;
-import com.Booking_care.domain.response.ResDoctorDTO;
 import com.Booking_care.domain.response.ResSupportDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
-import com.Booking_care.service.DoctorService;
+import com.Booking_care.service.ClinicService;
 import com.Booking_care.service.SupportService;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
@@ -29,9 +26,12 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/v1/supports")
 public class SupportController {
     private final SupportService supportService;
+    private final ClinicService clinicService;
 
-    public SupportController(SupportService supportService) {
+    public SupportController(SupportService supportService,
+            ClinicService clinicService) {
         this.supportService = supportService;
+        this.clinicService = clinicService;
     }
 
     @GetMapping
@@ -66,10 +66,12 @@ public class SupportController {
 
         if (this.supportService.isAccountExits(acc.getId())) {
             throw new IdInvalidException(
-                    "Account với id " + support.getAccount().getId() + " đã được sử dụng cho một bác sĩ khác");
+                    "Account với id " + support.getAccount().getId() + " đã được sử dụng cho một trợ lý khác");
         }
 
-        // kiểm tra clinic && specialty có tồn tại hay không
+        if (this.clinicService.fetchClinicById(support.getClinic().getId()) == null) {
+            throw new IdInvalidException("Clinic với id :" + support.getClinic().getId() + " không tồn tại");
+        }
 
         Support supportDB = this.supportService.handleCreateSupport(support);
 
@@ -79,13 +81,17 @@ public class SupportController {
     @PutMapping
     @ApiMessage("Update support by id")
     public ResponseEntity<ResSupportDTO> updateDoctor(@Valid @RequestBody Support support) throws IdInvalidException {
-        Support supportDB = this.supportService.handleUpdateSupport(support);
 
-        if (supportDB == null) {
+        if (this.supportService.fetchSupportById(support.getId()) == null) {
             throw new IdInvalidException("Support với id " + support.getId() + " không tồn tại");
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.supportService.convertToResSupportDTO(supportDB));
+        if (this.clinicService.fetchClinicById(support.getClinic().getId()) == null) {
+            throw new IdInvalidException("Clinic với id :" + support.getClinic().getId() + " không tồn tại");
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(this.supportService.convertToResSupportDTO(this.supportService.handleUpdateSupport(support)));
     }
 
     @DeleteMapping("/{id}")
