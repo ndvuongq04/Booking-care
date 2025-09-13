@@ -23,5 +23,4 @@ public class ResSupportDTO {
     private Boolean isActive;
     private ResAccountDTO account;
     private Clinic clinic;
-    private List<Bill> bill;
 }

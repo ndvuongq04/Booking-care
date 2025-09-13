@@ -26,8 +26,8 @@ public class SupportService {
     private final AccountService accountService;
     private final AccountRepository accountRepository;
 
-
-    public SupportService(SupportRepository supportRepository, AccountService accountService, AccountRepository accountRepository) {
+    public SupportService(SupportRepository supportRepository, AccountService accountService,
+            AccountRepository accountRepository) {
         this.supportRepository = supportRepository;
         this.accountService = accountService;
         this.accountRepository = accountRepository;
@@ -39,7 +39,6 @@ public class SupportService {
 
     public Account fetchAccountById(long id) {
         Optional<Account> acc = this.accountRepository.findById(id);
-        System.out.println("haha");
         if (acc.isPresent()) {
             return acc.get();
         }
@@ -57,7 +56,6 @@ public class SupportService {
         res.setIsActive(support.getIsActive());
         res.setAccount(this.accountService.convertToResAccountDTO(acc));
         res.setClinic(support.getClinic());
-        res.setBill(support.getBills());
         return res;
     }
 
@@ -74,10 +72,10 @@ public class SupportService {
         if (currentSupport != null) {
 
             // if (support.getClinic() != null) {
-            //     // call api clinic , kta id của clinic có ok ko
-            //     Clinic clinic = new Clinic();
-            //     // set value
-            //     currentSupport.setClinic(clinic != null ? clinic : null);
+            // // call api clinic , kta id của clinic có ok ko
+            // Clinic clinic = new Clinic();
+            // // set value
+            // currentSupport.setClinic(clinic != null ? clinic : null);
             // }
 
             currentSupport = this.supportRepository.save(currentSupport);
@@ -86,12 +84,9 @@ public class SupportService {
         return currentSupport;
     }
 
-    public void handleDeleteSupport(long id) {
-        Support support = fetchSupportById(id);
-        if (support != null) {
-            support.setIsActive(false);
-        this.supportRepository.save(support);
-        }
+    public void handleDeleteSupport(Support s) {
+        s.setIsActive(false);
+        this.supportRepository.save(s);
     }
 
     public ResultPaginationDTO fetchAllSupport(Pageable pageable) {

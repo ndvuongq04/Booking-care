@@ -29,7 +29,7 @@ public class Support {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
-    private Boolean isActive = true;
+    private Boolean isActive;
 
     // Account
     @OneToOne
@@ -40,7 +40,7 @@ public class Support {
     @ManyToOne
     @JoinColumn(name = "clinic_id")
     private Clinic clinic;
-    
+
     // Bill
     @OneToMany(mappedBy = "support")
     @JsonIgnore
@@ -48,9 +48,9 @@ public class Support {
 
     @PrePersist
     public void handleBeforeCreate() {
-        if (!isActive) {
+        if (isActive == null) {
             isActive = true;
         }
-        
+
     }
 }

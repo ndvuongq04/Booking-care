@@ -3,6 +3,8 @@ package com.Booking_care.domain;
 import java.time.Instant;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -31,10 +33,12 @@ public class Clinic {
 
     // Doctor
     @OneToMany(mappedBy = "clinic")
+    @JsonIgnore
     private List<Doctor> doctors;
 
     // Support
     @OneToMany(mappedBy = "clinic")
+    @JsonIgnore
     private List<Support> supports;
 
     // Address
@@ -44,14 +48,17 @@ public class Clinic {
 
     // ClinicSpecialty
     @OneToMany(mappedBy = "clinic")
+    @JsonIgnore
     private List<ClinicSpecialty> clinicSpecialties;
 
     // MedicalRecord
     @OneToMany(mappedBy = "clinic")
+    @JsonIgnore
     private List<MedicalRecord> medicalRecords;
 
     // Booking
     @OneToMany(mappedBy = "clinic")
+    @JsonIgnore
     private List<Booking> bookings;
 
     public Clinic() {

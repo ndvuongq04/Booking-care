@@ -28,11 +28,11 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/v1/supports")
 public class SupportController {
-      private final SupportService supportService;
+    private final SupportService supportService;
 
-      public SupportController(SupportService supportService) {
-          this.supportService = supportService;
-      }
+    public SupportController(SupportService supportService) {
+        this.supportService = supportService;
+    }
 
     @GetMapping
     @ApiMessage("Fetch all supports")
@@ -56,6 +56,7 @@ public class SupportController {
     }
 
     @PostMapping
+    @ApiMessage("Create support")
     public ResponseEntity<ResSupportDTO> postMethodName(@Valid @RequestBody Support support) throws IdInvalidException {
         Account acc = this.supportService.fetchAccountById(support.getAccount().getId());
 
@@ -76,6 +77,7 @@ public class SupportController {
     }
 
     @PutMapping
+    @ApiMessage("Update support by id")
     public ResponseEntity<ResSupportDTO> updateDoctor(@Valid @RequestBody Support support) throws IdInvalidException {
         Support supportDB = this.supportService.handleUpdateSupport(support);
 
@@ -89,15 +91,15 @@ public class SupportController {
     @DeleteMapping("/{id}")
     @ApiMessage("Delete doctor by id")
     public ResponseEntity<Void> deleteDoctorById(@PathVariable("id") long id) throws IdInvalidException {
-    Support support = this.supportService.fetchSupportById(id);
+        Support support = this.supportService.fetchSupportById(id);
 
-    if (support == null) {
-        throw new IdInvalidException("Doctor với id " + id + " không tồn tại");
-    }
-    
-    this.supportService.handleDeleteSupport(id);
+        if (support == null) {
+            throw new IdInvalidException("Doctor với id " + id + " không tồn tại");
+        }
 
-    return ResponseEntity.status(HttpStatus.OK)
-    .body(null);
+        this.supportService.handleDeleteSupport(support);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(null);
     }
 }
