@@ -56,7 +56,10 @@ public class Clinic {
     // Support
     @OneToMany(mappedBy = "clinic")
     @JsonIgnore
+<<<<<<< HEAD
 
+=======
+>>>>>>> feature/support-management
     private List<Support> supports;
 
     // Address
