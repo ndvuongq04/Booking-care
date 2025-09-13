@@ -1,5 +1,6 @@
 package com.Booking_care.config;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.boot.CommandLineRunner;
@@ -8,22 +9,27 @@ import org.springframework.stereotype.Service;
 
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Role;
+import com.Booking_care.domain.Time;
 import com.Booking_care.domain.enums.GenderEnum;
 import com.Booking_care.repository.AccountRepository;
 import com.Booking_care.repository.RoleRepository;
+import com.Booking_care.repository.TimeRepository;
 
 @Service
 public class DatabaseInitialize implements CommandLineRunner {
     private final RoleRepository roleRepository;
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TimeRepository timeRepository;
 
     public DatabaseInitialize(RoleRepository roleRepository,
             AccountRepository accountRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            TimeRepository timeRepository) {
         this.roleRepository = roleRepository;
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
+        this.timeRepository = timeRepository;
     }
 
     @Override
@@ -68,6 +74,25 @@ public class DatabaseInitialize implements CommandLineRunner {
 
             this.accountRepository.save(adminAcc);
 
+        }
+
+        // seed times
+        long countTime = this.timeRepository.count();
+        if (countTime == 0) {
+            List<Time> slots = List.of(
+                    new Time(0, "08:00", "08:30", null, null, null),
+                    new Time(0, "08:30", "09:00", null, null, null),
+                    new Time(0, "09:00", "09:30", null, null, null),
+                    new Time(0, "09:30", "10:00", null, null, null),
+                    new Time(0, "10:00", "10:30", null, null, null),
+                    new Time(0, "10:30", "11:00", null, null, null),
+                    new Time(0, "13:30", "14:00", null, null, null),
+                    new Time(0, "14:00", "14:30", null, null, null),
+                    new Time(0, "14:30", "15:00", null, null, null),
+                    new Time(0, "15:00", "15:30", null, null, null),
+                    new Time(0, "15:30", "16:00", null, null, null),
+                    new Time(0, "16:00", "16:30", null, null, null));
+            this.timeRepository.saveAll(slots);
         }
 
         System.out.println(">>> END INIT DATABASE");
