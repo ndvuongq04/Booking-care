@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import com.Booking_care.domain.enums.BookingStatusEnum;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,11 +31,14 @@ public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
+
     private LocalDate appointmentDate; // ngày khám
     private String description;
     private Instant createAt;
     private Instant updateAt;
-    private BookingStatusEnum status; // dùng enum thay vì String
+
+    @Enumerated(EnumType.STRING)
+    private BookingStatusEnum status;
 
     // Doctor
     @ManyToOne
@@ -57,6 +62,10 @@ public class Booking {
 
     @PrePersist
     public void handleBeforeCreate() {
+        if (status == null) {
+            status = BookingStatusEnum.PENDING;
+        }
+
         this.createAt = Instant.now();
     }
 
