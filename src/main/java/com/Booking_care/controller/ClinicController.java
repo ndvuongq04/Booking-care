@@ -11,12 +11,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Clinic;
-import com.Booking_care.domain.request.accountDTO.CreateAccountDTO;
-import com.Booking_care.domain.request.accountDTO.UpdateAccountDTO;
-import com.Booking_care.domain.response.ResAccountDTO;
+import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.ClinicService;
 import com.Booking_care.util.annotation.ApiMessage;
@@ -35,7 +31,7 @@ public class ClinicController {
 
     @PostMapping("/clinics")
     @ApiMessage("Create new clinic")
-    public ResponseEntity<Clinic> createNewClinic(@Valid @RequestBody Clinic reqClinic)
+    public ResponseEntity<ResClinicDTO> createNewClinic(@Valid @RequestBody Clinic reqClinic)
             throws IdInvalidException {
         boolean isNameExits = this.clinicService.isNameExits(reqClinic.getName());
 
@@ -52,12 +48,12 @@ public class ClinicController {
         }
         Clinic c = this.clinicService.handleCreateClinic(reqClinic);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(c);
+                .body(this.clinicService.convertToClinicDTO(c));
     }
 
     @GetMapping("/clinics/{id}")
     @ApiMessage("Fetch clinic by id")
-    public ResponseEntity<Clinic> getClinicById(@PathVariable("id") long id) throws IdInvalidException {
+    public ResponseEntity<ResClinicDTO> getClinicById(@PathVariable("id") long id) throws IdInvalidException {
         Clinic c = this.clinicService.fetchClinicById(id);
 
         if (c == null) {
@@ -65,7 +61,7 @@ public class ClinicController {
         }
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(c);
+                .body(this.clinicService.convertToClinicDTO(c));
     }
 
     @DeleteMapping("clinics/{id}")
@@ -83,7 +79,7 @@ public class ClinicController {
 
     @PutMapping("/clinics")
     @ApiMessage("Update a clinic")
-    public ResponseEntity<Clinic> updateAccount(@Valid @RequestBody Clinic reqClinic)
+    public ResponseEntity<ResClinicDTO> updateAccount(@Valid @RequestBody Clinic reqClinic)
             throws IdInvalidException {
         Clinic c = this.clinicService.fetchClinicById(reqClinic.getId());
 
@@ -97,14 +93,15 @@ public class ClinicController {
                     "Name " + reqClinic.getName() + " đã tồn tại, Vui lòng sử dụng name khác.");
         }
 
-        boolean isAddressActiveExits = this.clinicService.existsAddressActiveById(reqClinic.getAddress().getId());
-        if (!isAddressActiveExits) {
+        boolean isAddressExist = this.clinicService.existsAddressActiveById(reqClinic.getAddress().getId());
+        if (!isAddressExist) {
             throw new IdInvalidException(
                     "Address : " + reqClinic.getAddress().getId()
-                            + " không tồn tại (Không hoạt động), Vui lòng sử dụng address khác.");
+                            + " không tồn tại, Vui lòng sử dụng address khác.");
         }
+        Clinic clinic = this.clinicService.handleUpdateClinic(reqClinic);
 
-        return ResponseEntity.ok(this.clinicService.handleUpdateClinic(reqClinic));
+        return ResponseEntity.ok(this.clinicService.convertToClinicDTO(clinic));
     }
 
     @GetMapping("/clinics")
