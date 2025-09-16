@@ -2,6 +2,8 @@ package com.Booking_care.domain.response;
 
 import java.time.Instant;
 
+import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,5 +19,5 @@ public class ResNotificationDTO {
     private String content;
     private Instant createAt;
     private ResAccountDTO account;
-    
+
 }

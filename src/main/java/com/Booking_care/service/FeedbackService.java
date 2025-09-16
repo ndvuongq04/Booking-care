@@ -7,14 +7,10 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Feedback;
 import com.Booking_care.domain.response.ResFeedbackDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
-import com.Booking_care.repository.AccountRepository;
-import com.Booking_care.repository.DoctorRepository;
 import com.Booking_care.repository.FeedbackRepository;
 
 @Service
@@ -94,7 +90,7 @@ public class FeedbackService {
         res.setDescription(feedback.getDescription());
 
         Doctor doctor = this.doctorService.fetchDoctorById(feedback.getDoctor().getId());
-        res.setDoctor(this.doctorService.convertToResDoctorDTO(doctor));
+        res.setDoctor(this.doctorService.convertToDoctorDTO(doctor));
 
         return res;
     }

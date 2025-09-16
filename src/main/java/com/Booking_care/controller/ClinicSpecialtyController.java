@@ -11,14 +11,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.ClinicSpecialty;
 import com.Booking_care.domain.Specialty;
-import com.Booking_care.domain.request.accountDTO.CreateAccountDTO;
-import com.Booking_care.domain.request.accountDTO.UpdateAccountDTO;
-import com.Booking_care.domain.response.ResAccountDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.ClinicSpecialtyService;
 import com.Booking_care.util.annotation.ApiMessage;

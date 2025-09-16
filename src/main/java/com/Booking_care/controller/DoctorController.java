@@ -3,8 +3,8 @@ package com.Booking_care.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.Doctor;
+import com.Booking_care.domain.dto.DoctorDTO.ResDoctorDTO;
 import com.Booking_care.domain.request.UpdateDoctorDTO;
-import com.Booking_care.domain.response.ResDoctorDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.ClinicService;
 import com.Booking_care.service.DoctorService;
@@ -60,7 +60,7 @@ public class DoctorController {
         }
 
         Doctor doctorDB = this.doctorService.handleCreateDoctor(doctor);
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.doctorService.convertToResDoctorDTO(doctorDB));
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.doctorService.convertToDoctorDTO(doctorDB));
     }
 
     @PutMapping("doctors")
@@ -79,7 +79,7 @@ public class DoctorController {
         }
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(this.doctorService.convertToResDoctorDTO(this.doctorService.handleUpdateDoctor(reqDoctor)));
+                .body(this.doctorService.convertToDoctorDTO(this.doctorService.handleUpdateDoctor(reqDoctor)));
     }
 
     @GetMapping("/doctors/{id}")
@@ -92,7 +92,7 @@ public class DoctorController {
         }
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(this.doctorService.convertToResDoctorDTO(doctor));
+                .body(this.doctorService.convertToDoctorDTO(doctor));
     }
 
     @DeleteMapping("/doctors/{id}")

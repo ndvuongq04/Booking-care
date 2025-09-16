@@ -1,5 +1,7 @@
 package com.Booking_care.domain.response;
 
+import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
