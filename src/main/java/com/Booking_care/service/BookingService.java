@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,7 @@ import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.Time;
 import com.Booking_care.domain.dto.BookingDTO.CreateBookingDTO;
+import com.Booking_care.domain.dto.BookingDTO.ResBookingDTO;
 import com.Booking_care.domain.dto.BookingDTO.UpdateBookingDTO;
 import com.Booking_care.domain.enums.BookingStatusEnum;
 import com.Booking_care.domain.response.ResultPaginationDTO;
@@ -64,7 +66,9 @@ public class BookingService {
         meta.setTotals(page.getTotalElements());
 
         // convert
-        List<Booking> listBooking = page.getContent();
+        List<ResBookingDTO> listBooking = page.getContent().stream()
+                .map(item -> this.convertToBookingDTO(item))
+                .collect(Collectors.toList());
 
         res.setResult(listBooking);
         res.setMeta(meta);
@@ -199,6 +203,40 @@ public class BookingService {
         }
 
         return b;
+    }
+
+    public ResBookingDTO convertToBookingDTO(Booking booking) {
+        if (booking == null)
+            return null;
+
+        ResBookingDTO dto = new ResBookingDTO();
+        dto.setId(booking.getId());
+        dto.setAppointmentDate(booking.getAppointmentDate());
+        dto.setDescription(booking.getDescription());
+        dto.setCreateAt(booking.getCreateAt());
+        dto.setUpdateAt(booking.getUpdateAt());
+        dto.setStatus(booking.getStatus());
+
+        if (booking.getDoctor() != null) {
+            dto.setDoctor(this.doctorService.convertToDoctorDTO(booking.getDoctor()));
+        }
+
+        if (booking.getPatient() != null) {
+            dto.setPatient(this.patientService.convertToResPatientDTO(booking.getPatient()));
+        }
+
+        if (booking.getClinic() != null) {
+            dto.setClinic(this.clinicService.convertToClinicDTO(booking.getClinic()));
+        }
+
+        if (booking.getTime() != null) {
+            dto.setTime(new ResBookingDTO.ResTimeDTO(
+                    booking.getTime().getId(),
+                    booking.getTime().getStart(),
+                    booking.getTime().getEnd()));
+        }
+
+        return dto;
     }
 
 }

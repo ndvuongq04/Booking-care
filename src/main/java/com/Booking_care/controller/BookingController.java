@@ -17,6 +17,7 @@ import com.Booking_care.domain.response.ResultPaginationDTO;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.dto.BookingDTO.CreateBookingDTO;
+import com.Booking_care.domain.dto.BookingDTO.ResBookingDTO;
 import com.Booking_care.domain.dto.BookingDTO.UpdateBookingDTO;
 
 @RestController
@@ -31,9 +32,9 @@ public class BookingController {
     // Create booking
     @PostMapping("/bookings")
     @ApiMessage("Create new booking")
-    public ResponseEntity<Booking> create(@RequestBody CreateBookingDTO req)
+    public ResponseEntity<ResBookingDTO> create(@RequestBody CreateBookingDTO req)
             throws IdInvalidException, BusinessException {
-        return ResponseEntity.ok(this.bookingService.createBooking(req));
+        return ResponseEntity.ok(this.bookingService.convertToBookingDTO(this.bookingService.createBooking(req)));
     }
 
     // Get all bookings
@@ -47,31 +48,31 @@ public class BookingController {
 
     @GetMapping("/bookings/{id}")
     @ApiMessage("Fetch booking by id")
-    public ResponseEntity<Booking> getById(@PathVariable Long id) throws IdInvalidException {
+    public ResponseEntity<ResBookingDTO> getById(@PathVariable Long id) throws IdInvalidException {
         Booking booking = bookingService.getBookingById(id);
         if (booking == null) {
             throw new IdInvalidException("Booking với id " + id + " không tồn tại");
         }
-        return ResponseEntity.ok(booking);
+        return ResponseEntity.ok(this.bookingService.convertToBookingDTO(booking));
     }
 
     // Cancel booking
     @PutMapping("/bookings/{id}/cancel")
     @ApiMessage("Cancel a booking")
-    public ResponseEntity<Booking> cancel(@PathVariable Long id) throws IdInvalidException {
+    public ResponseEntity<ResBookingDTO> cancel(@PathVariable Long id) throws IdInvalidException {
         Booking canceled = bookingService.cancelBooking(id);
         if (canceled == null) {
             throw new IdInvalidException("Booking với id " + id + " không tồn tại");
         }
-        return ResponseEntity.ok(canceled);
+        return ResponseEntity.ok(this.bookingService.convertToBookingDTO(canceled));
     }
 
     // Update booking (time_id, clinic_id, AppointmentDate, Description)
     @PutMapping("/bookings")
     @ApiMessage("update a booking")
-    public ResponseEntity<Booking> update(@RequestBody UpdateBookingDTO req)
+    public ResponseEntity<ResBookingDTO> update(@RequestBody UpdateBookingDTO req)
             throws IdInvalidException, BusinessException {
-        return ResponseEntity.ok(this.bookingService.updateBooking(req));
+        return ResponseEntity.ok(this.bookingService.convertToBookingDTO(this.bookingService.updateBooking(req)));
     }
 
     // update status booking by id
