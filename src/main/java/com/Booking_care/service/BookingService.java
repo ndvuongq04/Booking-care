@@ -1,9 +1,11 @@
 package com.Booking_care.service;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -237,6 +239,90 @@ public class BookingService {
         }
 
         return dto;
+    }
+
+    public Booking updateBookingStatus(long id, BookingStatusEnum status) {
+        Booking b = this.getBookingById(id);
+
+        if (b != null) {
+            b.setStatus(status);
+            b.setUpdateAt(Instant.now());
+
+            this.bookingRepository.save(b);
+        }
+        return b;
+    }
+
+    public ResultPaginationDTO fetchBookingByInstanceId(long id, Pageable pageable, Object obj) {
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<Booking> page = Page.empty();
+
+        if (obj instanceof Patient) {
+            page = this.bookingRepository.findByPatientId(id, pageable);
+        }
+
+        if (obj instanceof Doctor) {
+            page = this.bookingRepository.findByDoctorId(id, pageable);
+        }
+
+        if (obj instanceof Clinic) {
+            page = this.bookingRepository.findByClinicId(id, pageable);
+        }
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        // convert
+        List<ResBookingDTO> listBooking = page.getContent().stream()
+                .map(item -> this.convertToBookingDTO(item))
+                .collect(Collectors.toList());
+
+        res.setResult(listBooking);
+        res.setMeta(meta);
+
+        return res;
+    }
+
+    public ResultPaginationDTO getBookingsByDoctorAndDate(Long doctorId, LocalDate appointmentDate, Pageable pageable) {
+        Page<Booking> page = bookingRepository.findByDoctorIdAndAppointmentDate(doctorId, appointmentDate, pageable);
+
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        res.setMeta(meta);
+        res.setResult(page.getContent().stream().map(this::convertToBookingDTO).toList());
+
+        return res;
+    }
+
+    public List<ResBookingDTO.ResTimeDTO> getAvailableTimes(Long doctorId, LocalDate appointmentDate) {
+        // Tất cả slot trong hệ thống
+        List<Time> allTimes = this.timeService.getAllTimes();
+
+        // Các booking đã tồn tại
+        List<Booking> booked = bookingRepository.findByDoctorIdAndAppointmentDate(doctorId, appointmentDate);
+
+        // Lấy id time đã được đặt
+        Set<Long> bookedTimeIds = booked.stream()
+                .map(b -> b.getTime().getId())
+                .collect(Collectors.toSet());
+
+        // Lọc ra các time chưa bị đặt
+        return allTimes.stream()
+                .filter(t -> !bookedTimeIds.contains(t.getId()))
+                .map(t -> new ResBookingDTO.ResTimeDTO(t.getId(), t.getStart(), t.getEnd()))
+                .toList();
     }
 
 }
