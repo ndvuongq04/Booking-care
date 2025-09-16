@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Support;
-import com.Booking_care.domain.response.ResSupportDTO;
+import com.Booking_care.domain.dto.SupportDTO.ResSupportDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.SupportRepository;
 
@@ -45,7 +45,7 @@ public class SupportService {
         res.setId(support.getId());
         res.setIsActive(support.getIsActive());
         res.setAccount(this.accountService.convertToResAccountDTO(acc));
-        res.setClinic(support.getClinic());
+        res.setClinic(this.clinicService.convertToClinicDTO(support.getClinic()));
         return res;
     }
 

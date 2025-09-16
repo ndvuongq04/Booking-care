@@ -12,7 +12,7 @@ import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Specialty;
 import com.Booking_care.domain.dto.DoctorDTO.ResDoctorDTO;
-import com.Booking_care.domain.request.UpdateDoctorDTO;
+import com.Booking_care.domain.dto.DoctorDTO.UpdateDoctorDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.DoctorRepository;
 

@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 
-import com.Booking_care.domain.response.ResLoginDTO;
+import com.Booking_care.domain.dto.AuthDTO.ResLoginDTO;
 import com.nimbusds.jose.util.Base64;
 
 @Service

@@ -1,4 +1,4 @@
-package com.Booking_care.domain.response;
+package com.Booking_care.domain.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

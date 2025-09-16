@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Feedback;
-import com.Booking_care.domain.response.ResFeedbackDTO;
+import com.Booking_care.domain.dto.ResFeedbackDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.FeedbackRepository;
 

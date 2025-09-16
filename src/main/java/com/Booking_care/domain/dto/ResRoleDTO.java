@@ -1,6 +1,4 @@
-package com.Booking_care.domain.response;
-
-import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
+package com.Booking_care.domain.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,8 +9,8 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ResPatientDTO {
+public class ResRoleDTO {
     private long id;
-    private String bhyt;
-    private ResAccountDTO account;
+    private String name;
+    private String description;
 }

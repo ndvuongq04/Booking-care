@@ -11,7 +11,6 @@ import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.ClinicSpecialty;
 import com.Booking_care.domain.Specialty;
-import com.Booking_care.domain.response.ResAccountDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.ClinicSpecialtyRepository;
 

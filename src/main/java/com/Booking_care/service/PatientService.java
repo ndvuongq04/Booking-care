@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Patient;
-import com.Booking_care.domain.response.ResPatientDTO;
+import com.Booking_care.domain.dto.PatientDTO.ResPatientDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.PatientRepository;
 

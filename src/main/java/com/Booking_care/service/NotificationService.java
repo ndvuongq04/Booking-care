@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Notification;
-import com.Booking_care.domain.response.ResNotificationDTO;
+import com.Booking_care.domain.dto.ResNotificationDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.NotificationRepository;
 

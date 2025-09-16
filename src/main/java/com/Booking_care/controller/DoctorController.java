@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.dto.DoctorDTO.ResDoctorDTO;
-import com.Booking_care.domain.request.UpdateDoctorDTO;
+import com.Booking_care.domain.dto.DoctorDTO.UpdateDoctorDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.ClinicService;
 import com.Booking_care.service.DoctorService;

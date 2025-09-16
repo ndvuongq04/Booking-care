@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Support;
-import com.Booking_care.domain.response.ResSupportDTO;
+import com.Booking_care.domain.dto.SupportDTO.ResSupportDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.ClinicService;
 import com.Booking_care.service.SupportService;

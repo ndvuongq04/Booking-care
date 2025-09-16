@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.Booking_care.repository.ServiceRepository;
 import com.Booking_care.domain.Services;
-import com.Booking_care.domain.response.ResServicesDTO;
+import com.Booking_care.domain.dto.ServicesDTO.ResServicesDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 
 @Service

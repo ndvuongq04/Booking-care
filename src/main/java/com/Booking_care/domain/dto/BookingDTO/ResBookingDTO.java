@@ -5,8 +5,8 @@ import java.time.LocalDate;
 
 import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 import com.Booking_care.domain.dto.DoctorDTO.ResDoctorDTO;
+import com.Booking_care.domain.dto.PatientDTO.ResPatientDTO;
 import com.Booking_care.domain.enums.BookingStatusEnum;
-import com.Booking_care.domain.response.ResPatientDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

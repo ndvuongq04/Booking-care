@@ -1,6 +1,5 @@
 package com.Booking_care.domain.dto.SupportDTO;
 
-import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
 import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 
