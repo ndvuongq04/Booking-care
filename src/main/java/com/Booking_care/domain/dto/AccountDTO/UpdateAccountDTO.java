@@ -1,4 +1,4 @@
-package com.Booking_care.domain.request.accountDTO;
+package com.Booking_care.domain.dto.AccountDTO;
 
 import com.Booking_care.domain.enums.GenderEnum;
 

@@ -1,4 +1,4 @@
-package com.Booking_care.domain.request;
+package com.Booking_care.domain.dto.AuthDTO;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

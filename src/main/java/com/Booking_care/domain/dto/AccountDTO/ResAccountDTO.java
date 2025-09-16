@@ -1,4 +1,4 @@
-package com.Booking_care.domain.response;
+package com.Booking_care.domain.dto.AccountDTO;
 
 import java.time.Instant;
 import java.time.LocalDate;

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,5 +25,11 @@ public class TimeController {
     @ApiMessage("Fetch all time")
     public ResponseEntity<List<Time>> getAllTimes() {
         return ResponseEntity.ok(this.timeService.getAllTimes());
+    }
+
+    @GetMapping("/times/{id}")
+    @ApiMessage("Fetch time by id")
+    public ResponseEntity<Time> getTimeById(@PathVariable("id") long id) {
+        return ResponseEntity.ok(this.timeService.fetchTimeById(id));
     }
 }

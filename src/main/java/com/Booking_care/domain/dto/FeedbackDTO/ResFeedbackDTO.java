@@ -1,4 +1,6 @@
-package com.Booking_care.domain.response;
+package com.Booking_care.domain.dto.FeedbackDTO;
+
+import com.Booking_care.domain.dto.DoctorDTO.ResDoctorDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

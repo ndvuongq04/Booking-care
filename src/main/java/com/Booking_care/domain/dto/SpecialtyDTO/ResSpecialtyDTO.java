@@ -1,6 +1,5 @@
-package com.Booking_care.domain.response;
+package com.Booking_care.domain.dto.SpecialtyDTO;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 
 import lombok.AllArgsConstructor;
@@ -12,12 +11,12 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResServicesDTO {
-    private long id;
+public class ResSpecialtyDTO {
+    private Long id;
     private String name;
-    private BigDecimal cost;
     private String description;
+    private String image;
+    private Boolean isActive;
     private Instant createAt;
     private Instant updateAt;
-
 }

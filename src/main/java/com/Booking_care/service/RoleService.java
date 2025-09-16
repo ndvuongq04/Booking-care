@@ -7,11 +7,8 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Role;
-import com.Booking_care.domain.response.ResAccountDTO;
-import com.Booking_care.domain.response.ResRoleDTO;
+import com.Booking_care.domain.dto.ResRoleDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.RoleRepository;
 

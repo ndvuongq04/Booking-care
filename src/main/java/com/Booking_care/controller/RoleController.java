@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Booking_care.domain.Role;
-import com.Booking_care.domain.response.ResRoleDTO;
+import com.Booking_care.domain.dto.ResRoleDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.RoleService;
 import com.Booking_care.util.annotation.ApiMessage;

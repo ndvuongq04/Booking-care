@@ -7,13 +7,12 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Specialty;
-import com.Booking_care.domain.request.UpdateDoctorDTO;
-import com.Booking_care.domain.response.ResDoctorDTO;
+import com.Booking_care.domain.dto.DoctorDTO.ResDoctorDTO;
+import com.Booking_care.domain.dto.DoctorDTO.UpdateDoctorDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.DoctorRepository;
 
@@ -46,19 +45,31 @@ public class DoctorService {
         return this.doctorRepository.save(doctor);
     }
 
-    public ResDoctorDTO convertToResDoctorDTO(Doctor doctor) {
-        ResDoctorDTO res = new ResDoctorDTO();
+    public ResDoctorDTO convertToDoctorDTO(Doctor doctor) {
+        if (doctor == null)
+            return null;
 
-        res.setId(doctor.getId());
-        res.setCost(doctor.getCost());
-        res.setCreateAt(doctor.getCreateAt());
-        res.setUpdateAt(doctor.getUpdateAt());
-        res.setDegree(doctor.getDegree());
-        res.setAccount(this.accountService.convertToResAccountDTO(this.fetchAccountById(doctor.getAccount().getId())));
-        res.setClinic(this.clinicService.fetchClinicById(doctor.getClinic().getId()));
-        res.setSpecialty(this.specialtyService.fetchSpecialtyById(doctor.getSpecialty().getId()));
+        ResDoctorDTO dto = new ResDoctorDTO();
+        dto.setId(doctor.getId());
+        dto.setDegree(doctor.getDegree() != null ? doctor.getDegree().name() : null);
+        dto.setIsActive(doctor.getIsActive());
+        dto.setCreateAt(doctor.getCreateAt());
+        dto.setUpdateAt(doctor.getUpdateAt());
 
-        return res;
+        if (doctor.getAccount() != null) {
+            dto.setAccount(this.accountService.convertToResAccountDTO(doctor.getAccount()));
+        }
+
+        if (doctor.getClinic() != null) {
+            dto.setClinic(this.clinicService.convertToClinicDTO(doctor.getClinic()));
+        }
+
+        if (doctor.getSpecialty() != null) {
+            dto.setSpecialtyName(doctor.getSpecialty().getName());
+            dto.setSpecialtyDescription(doctor.getSpecialty().getDescription());
+        }
+
+        return dto;
     }
 
     public Doctor fetchDoctorById(long id) {
@@ -111,7 +122,7 @@ public class DoctorService {
 
         // convert
         List<ResDoctorDTO> listDoc = page.getContent().stream()
-                .map(item -> this.convertToResDoctorDTO(item))
+                .map(item -> this.convertToDoctorDTO(item))
                 .collect(Collectors.toList());
 
         res.setResult(listDoc);

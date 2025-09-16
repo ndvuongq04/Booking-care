@@ -1,4 +1,4 @@
-package com.Booking_care.domain.request;
+package com.Booking_care.domain.dto.DoctorDTO;
 
 import java.math.BigDecimal;
 

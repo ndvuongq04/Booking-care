@@ -58,4 +58,15 @@ public class GlobalException {
 
         return ResponseEntity.badRequest().body(res);
     }
+
+    @ExceptionHandler(value = {
+            BusinessException.class
+    })
+    public ResponseEntity<RestResponse<Object>> handleBusinessException(Exception ex) {
+        RestResponse<Object> res = new RestResponse<Object>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(ex.getMessage());
+        res.setError("Business exception occurs...");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
 }

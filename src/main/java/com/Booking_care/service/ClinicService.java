@@ -1,11 +1,14 @@
 package com.Booking_care.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import com.Booking_care.domain.Address;
 import com.Booking_care.domain.Clinic;
+import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.ClinicRepository;
 
@@ -42,7 +45,9 @@ public class ClinicService {
         meta.setTotals(page.getTotalElements());
 
         // convert
-        List<Clinic> listClinic = page.getContent();
+        List<ResClinicDTO> listClinic = page.getContent().stream()
+                .map(item -> this.convertToClinicDTO(item))
+                .collect(Collectors.toList());
 
         res.setResult(listClinic);
         res.setMeta(meta);
@@ -88,6 +93,28 @@ public class ClinicService {
     public boolean existsAddressActiveById(long id) {
         // address active true
         Address a = this.addressService.fetchAddressById(id);
-        return a.getIsActive();
+        return a != null;
     }
+
+    public ResClinicDTO convertToClinicDTO(Clinic clinic) {
+        if (clinic == null)
+            return null;
+
+        ResClinicDTO dto = new ResClinicDTO();
+        dto.setId(clinic.getId());
+        dto.setName(clinic.getName());
+        dto.setDescription(clinic.getDescription());
+        dto.setPosition(clinic.getPosition());
+        dto.setPhoneNumber(clinic.getPhoneNumber());
+        dto.setImage(clinic.getImage());
+
+        if (clinic.getAddress() != null) {
+            dto.setAddress(new ResClinicDTO.ResAddressDTO(
+                    clinic.getAddress().getId(),
+                    clinic.getAddress().getCity()));
+        }
+
+        return dto;
+    }
+
 }

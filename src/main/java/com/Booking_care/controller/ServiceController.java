@@ -3,7 +3,7 @@ package com.Booking_care.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.Services;
-import com.Booking_care.domain.response.ResServicesDTO;
+import com.Booking_care.domain.dto.ServicesDTO.ResServicesDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.ServicesService;
 import com.Booking_care.util.annotation.ApiMessage;

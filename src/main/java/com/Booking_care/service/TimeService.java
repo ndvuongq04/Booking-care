@@ -18,4 +18,8 @@ public class TimeService {
     public List<Time> getAllTimes() {
         return this.timeRepository.findAll();
     }
+
+    public Time fetchTimeById(long id) {
+        return this.timeRepository.findById(id).orElse(null);
+    }
 }

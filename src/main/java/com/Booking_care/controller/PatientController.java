@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Patient;
-import com.Booking_care.domain.response.ResPatientDTO;
+import com.Booking_care.domain.dto.PatientDTO.ResPatientDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.AccountService;
 import com.Booking_care.service.PatientService;
