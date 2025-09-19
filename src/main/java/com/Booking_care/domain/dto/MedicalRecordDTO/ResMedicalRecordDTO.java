@@ -3,11 +3,15 @@ package com.Booking_care.domain.dto.MedicalRecordDTO;
 import java.time.Instant;
 import java.util.List;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ResMedicalRecordDTO {
     private Long id;
     private String description;
@@ -25,6 +29,8 @@ public class ResMedicalRecordDTO {
     // Inner DTOs chỉ chứa thông tin cơ bản để FE hiển thị
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PatientDTO {
         private Long id;
         private String name;
@@ -32,6 +38,8 @@ public class ResMedicalRecordDTO {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class DoctorDTO {
         private Long id;
         private String name;
@@ -40,6 +48,8 @@ public class ResMedicalRecordDTO {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ClinicDTO {
         private Long id;
         private String name;
@@ -47,6 +57,8 @@ public class ResMedicalRecordDTO {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class SpecialtyDTO {
         private Long id;
         private String name;
