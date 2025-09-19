@@ -12,11 +12,18 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "bills")
 public class Bill {
@@ -48,22 +55,6 @@ public class Bill {
     @OneToMany(mappedBy = "bill")
     private List<BillDetail> billDetails;
 
-    public Bill(long id, BigDecimal totalBill, Instant createAt, Instant updateAt, BillStatusEnum status,
-            Patient patient,
-            MedicalRecord medicalRecord, Support support) {
-        this.id = id;
-        this.totalBill = totalBill;
-        this.createAt = createAt;
-        this.updateAt = updateAt;
-        this.status = status;
-        this.patient = patient;
-        this.medicalRecord = medicalRecord;
-        this.support = support;
-    }
-
-    public Bill() {
-    }
-
     @PrePersist
     public void handleBeforeCreate() {
         this.createAt = Instant.now();
@@ -72,78 +63,6 @@ public class Bill {
     @PreUpdate
     public void handleBeforeUpdate() {
         this.updateAt = Instant.now();
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public BigDecimal getTotalBill() {
-        return totalBill;
-    }
-
-    public void setTotalBill(BigDecimal totalBill) {
-        this.totalBill = totalBill;
-    }
-
-    public Instant getCreateAt() {
-        return createAt;
-    }
-
-    public void setCreateAt(Instant createAt) {
-        this.createAt = createAt;
-    }
-
-    public Instant getUpdateAt() {
-        return updateAt;
-    }
-
-    public void setUpdateAt(Instant updateAt) {
-        this.updateAt = updateAt;
-    }
-
-    public BillStatusEnum getStatus() {
-        return status;
-    }
-
-    public void setStatus(BillStatusEnum status) {
-        this.status = status;
-    }
-
-    public Patient getPatient() {
-        return patient;
-    }
-
-    public void setPatient(Patient patient) {
-        this.patient = patient;
-    }
-
-    public MedicalRecord getMedicalRecord() {
-        return medicalRecord;
-    }
-
-    public void setMedicalRecord(MedicalRecord medicalRecord) {
-        this.medicalRecord = medicalRecord;
-    }
-
-    public Support getSupport() {
-        return support;
-    }
-
-    public void setSupport(Support support) {
-        this.support = support;
-    }
-
-    public List<BillDetail> getBillDetails() {
-        return billDetails;
-    }
-
-    public void setBillDetails(List<BillDetail> billDetails) {
-        this.billDetails = billDetails;
     }
 
 }

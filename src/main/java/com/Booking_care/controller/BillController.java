@@ -4,15 +4,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.dto.BillDTO.ReqBillDTO;
 import com.Booking_care.domain.dto.BillDTO.ResBillDTO;
+import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.BillService;
+import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
 
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -24,10 +29,21 @@ public class BillController {
     }
 
     @PostMapping("/bill")
+    @ApiMessage("Create new Bill")
     public ResponseEntity<ResBillDTO> createNewBill(@Valid @RequestBody ReqBillDTO reqBill) throws IdInvalidException {
-        // TODO: process POST request
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.billService.createBill(reqBill));
+    }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.billService.toDto(reqBill));
+    @GetMapping("/bill")
+    @ApiMessage("Fetch all Bill")
+    public ResponseEntity<ResultPaginationDTO> getAllBill(Pageable pageable) {
+        return ResponseEntity.ok(this.billService.handleGetAllBill(pageable));
+    }
+
+    @GetMapping("/bill/{id}")
+    @ApiMessage("Fetch Bill by id")
+    public ResponseEntity<ResBillDTO> getBillById(@PathVariable("id") long id) throws IdInvalidException {
+        return ResponseEntity.ok(this.billService.getBillById(id));
     }
 
 }

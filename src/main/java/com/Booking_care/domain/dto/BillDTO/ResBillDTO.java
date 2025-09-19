@@ -1,7 +1,10 @@
 package com.Booking_care.domain.dto.BillDTO;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
+import com.Booking_care.domain.dto.BillDetailDTO.ResBillDetailDTO;
 import com.Booking_care.domain.dto.MedicalRecordDTO.ResMedicalRecordDTO;
 import com.Booking_care.domain.dto.MedicalRecordDTO.ResMedicalRecordDTO.PatientDTO;
 import com.Booking_care.domain.dto.ServicesDTO.ResServicesDTO;
@@ -15,22 +18,50 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class ResBillDTO {
-    private PatientDTO patient;
-    private ResMedicalRecordDTO medicalRecord;
-    private ResSupportDTO support;
+    private Long id;
+
+    // Quan hệ
+    private PatientDTO patient; // id + name thôi cho gọn
+    private MedicalRecordDTO medicalRecord;
+    private SupportDTO support;
+
+    private List<ResBillDetailDTO> services; // danh sách dịch vụ
+
+    // Thông tin hóa đơn
+    private BigDecimal totalBill;
     private BillStatusEnum status;
-    private List<ServiceItemDTO> services;
+
+    private Instant createAt;
+    private Instant updateAt;
+
+    // Nested DTOs gọn nhẹ
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class PatientDTO {
+        private Long id;
+        private String name;
+    }
 
     @Getter
     @Setter
-    @NoArgsConstructor
     @AllArgsConstructor
-    public static class ServiceItemDTO {
-        private ResServicesDTO service;
-        private Integer quantity;
+    @NoArgsConstructor
+    public static class MedicalRecordDTO {
+        private Long id;
+        private String description;
     }
 
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SupportDTO {
+        private Long id;
+        private String name;
+    }
 }

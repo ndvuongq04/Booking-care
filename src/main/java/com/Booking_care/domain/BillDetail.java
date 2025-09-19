@@ -53,6 +53,11 @@ public class BillDetail {
 
     @PrePersist
     public void handleBeforeCreate() {
+
+        if (this.serviceCost != null && this.quantity != null) {
+            this.totalService = this.serviceCost.multiply(BigDecimal.valueOf(this.quantity));
+        }
+
         this.createAt = Instant.now();
     }
 
