@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.Booking_care.domain.dto.ResCloudinaryDTO;
+import com.Booking_care.util.FileUpload;
 import com.Booking_care.util.error.StorageException;
 import com.cloudinary.Cloudinary;
 
@@ -21,6 +22,7 @@ public class CloudinaryService {
 
     public ResCloudinaryDTO uploadToFolder(final MultipartFile file, final String folder, final String publicIdHint)
             throws StorageException {
+        FileUpload.assertAllowed(file);
         try {
             Map<String, Object> options = new HashMap<>();
             options.put("resource_type", "image"); // tài nguyên ảnh

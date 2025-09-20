@@ -6,29 +6,58 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.Booking_care.domain.Address;
 import com.Booking_care.domain.Clinic;
+import com.Booking_care.domain.dto.ResCloudinaryDTO;
+import com.Booking_care.domain.dto.ClinicDTO.ReqClinicDTO;
 import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.ClinicRepository;
+import com.Booking_care.util.error.StorageException;
 
 @Service
 public class ClinicService {
     private final ClinicRepository clinicRepository;
     private final AddressService addressService;
+    private final CloudinaryService cloudinaryService;
+    private final String folder = "booking_care/clinic/";
 
     public ClinicService(ClinicRepository clinicRepository,
-            AddressService addressService) {
+            AddressService addressService,
+            CloudinaryService cloudinaryService) {
         this.clinicRepository = clinicRepository;
         this.addressService = addressService;
+        this.cloudinaryService = cloudinaryService;
     }
 
     public boolean isNameExits(String name) {
         return this.clinicRepository.existsByName(name);
     }
 
-    public Clinic handleCreateClinic(Clinic c) {
-        return this.clinicRepository.save(c);
+    public Clinic handleCreateClinic(ReqClinicDTO c) throws StorageException {
+
+        Clinic clinic = new Clinic();
+
+        if (c.getFile() != null && !c.getFile().isEmpty()) {
+            ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(c.getFile(), folder,
+                    c.getName());
+            clinic.setImage(resImg.getUrl());
+
+        }
+
+        clinic.setName(c.getName());
+        clinic.setDescription(c.getDescription());
+        clinic.setPosition(c.getPosition());
+        clinic.setPhoneNumber(c.getPhoneNumber());
+
+        //
+        Address a = new Address();
+        a.setId(c.getAddressId());
+        clinic.setAddress(a);
+
+        return this.clinicRepository.save(clinic);
     }
 
     public ResultPaginationDTO fetchAllClinic(Pageable pageable) {
@@ -67,17 +96,25 @@ public class ClinicService {
         }
     }
 
-    public Clinic handleUpdateClinic(Clinic clinic) {
+    public Clinic handleUpdateClinic(ReqClinicDTO clinic) throws StorageException {
         Clinic c = this.fetchClinicById(clinic.getId());
         if (c != null) {
             c.setName(clinic.getName());
             c.setPhoneNumber(clinic.getPhoneNumber());
             c.setPosition(clinic.getPosition());
             c.setIsActive(clinic.getIsActive());
-            c.setImage(clinic.getImage());
 
-            if (clinic.getAddress() != null) {
-                Address a = this.addressService.fetchAddressById(clinic.getAddress().getId());
+            // update img
+            if (clinic.getFile() != null && !clinic.getFile().isEmpty()) {
+                ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(clinic.getFile(), folder,
+                        clinic.getName());
+
+                c.setImage(resImg.getUrl());
+
+            }
+
+            if (clinic.getAddressId() != null) {
+                Address a = this.addressService.fetchAddressById(clinic.getAddressId());
                 c.setAddress(a);
             }
 

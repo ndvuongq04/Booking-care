@@ -2,21 +2,28 @@ package com.Booking_care.controller;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.Booking_care.domain.Clinic;
+import com.Booking_care.domain.dto.ClinicDTO.ReqClinicDTO;
 import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.ClinicService;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
+import com.Booking_care.util.error.StorageException;
 
 import jakarta.validation.Valid;
 
@@ -29,10 +36,10 @@ public class ClinicController {
         this.clinicService = clinicService;
     }
 
-    @PostMapping("/clinics")
+    @PostMapping(value = "/clinics", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Create new clinic")
-    public ResponseEntity<ResClinicDTO> createNewClinic(@Valid @RequestBody Clinic reqClinic)
-            throws IdInvalidException {
+    public ResponseEntity<ResClinicDTO> createNewClinic(@Valid @ModelAttribute ReqClinicDTO reqClinic)
+            throws IdInvalidException, StorageException {
         boolean isNameExits = this.clinicService.isNameExits(reqClinic.getName());
 
         if (isNameExits) {
@@ -40,10 +47,10 @@ public class ClinicController {
                     "Name " + reqClinic.getName() + " đã tồn tại, Vui lòng sử dụng name khác.");
         }
 
-        boolean isAddressActiveExits = this.clinicService.existsAddressActiveById(reqClinic.getAddress().getId());
+        boolean isAddressActiveExits = this.clinicService.existsAddressActiveById(reqClinic.getAddressId());
         if (!isAddressActiveExits) {
             throw new IdInvalidException(
-                    "Address : " + reqClinic.getAddress().getId()
+                    "Address : " + reqClinic.getAddressId()
                             + " không tồn tại (Không hoạt động), Vui lòng sử dụng address khác.");
         }
         Clinic c = this.clinicService.handleCreateClinic(reqClinic);
@@ -77,10 +84,10 @@ public class ClinicController {
         return ResponseEntity.ok(null);
     }
 
-    @PutMapping("/clinics")
+    @PutMapping(value = "/clinics", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Update a clinic")
-    public ResponseEntity<ResClinicDTO> updateAccount(@Valid @RequestBody Clinic reqClinic)
-            throws IdInvalidException {
+    public ResponseEntity<ResClinicDTO> updateAccount(@Valid @ModelAttribute ReqClinicDTO reqClinic)
+            throws IdInvalidException, StorageException {
         Clinic c = this.clinicService.fetchClinicById(reqClinic.getId());
 
         if (c == null) {
@@ -93,10 +100,10 @@ public class ClinicController {
                     "Name " + reqClinic.getName() + " đã tồn tại, Vui lòng sử dụng name khác.");
         }
 
-        boolean isAddressExist = this.clinicService.existsAddressActiveById(reqClinic.getAddress().getId());
+        boolean isAddressExist = this.clinicService.existsAddressActiveById(reqClinic.getAddressId());
         if (!isAddressExist) {
             throw new IdInvalidException(
-                    "Address : " + reqClinic.getAddress().getId()
+                    "Address : " + reqClinic.getAddressId()
                             + " không tồn tại, Vui lòng sử dụng address khác.");
         }
         Clinic clinic = this.clinicService.handleUpdateClinic(reqClinic);
