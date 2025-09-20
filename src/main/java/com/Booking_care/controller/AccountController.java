@@ -11,9 +11,12 @@ import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.AccountService;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
+import com.Booking_care.util.error.StorageException;
+
 import org.springframework.data.domain.Pageable;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,10 +36,10 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    @PostMapping("/accounts")
+    @PostMapping(value = "/accounts", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Create new account")
-    public ResponseEntity<ResAccountDTO> createNewAccount(@Valid @RequestBody CreateAccountDTO reqAccount)
-            throws IdInvalidException {
+    public ResponseEntity<ResAccountDTO> createNewAccount(@Valid @ModelAttribute CreateAccountDTO reqAccount)
+            throws IdInvalidException, StorageException {
         boolean isEmailExits = this.accountService.isEmailExits(reqAccount.getEmail());
 
         if (isEmailExits) {
@@ -62,10 +65,10 @@ public class AccountController {
                 .body(this.accountService.convertToResAccountDTO(acc));
     }
 
-    @PutMapping("/accounts")
+    @PutMapping(value = "/accounts", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Update a account")
-    public ResponseEntity<ResAccountDTO> updateAccount(@Valid @RequestBody UpdateAccountDTO reqAcc)
-            throws IdInvalidException {
+    public ResponseEntity<ResAccountDTO> updateAccount(@Valid @ModelAttribute UpdateAccountDTO reqAcc)
+            throws IdInvalidException, StorageException {
         Account acc = this.accountService.handleUpdateAccount(reqAcc);
 
         if (acc == null) {

@@ -25,6 +25,7 @@ public class ResAccountDTO {
     private Instant createAt;
     private Instant updateAt;
     private String cccd;
+    private String avatar;
 
     private RoleAccount role;
 
