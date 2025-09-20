@@ -10,6 +10,7 @@ import com.Booking_care.domain.dto.ResCloudinaryDTO;
 import com.Booking_care.util.FileUpload;
 import com.Booking_care.util.error.StorageException;
 import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 
 @Service
 public class CloudinaryService {
@@ -20,7 +21,7 @@ public class CloudinaryService {
         this.cloudinary = cloudinary;
     }
 
-    public ResCloudinaryDTO uploadToFolder(final MultipartFile file, final String folder, final String publicIdHint)
+    public ResCloudinaryDTO uploadToFolder(final MultipartFile file, final String folder, final String publicHintId)
             throws StorageException {
         FileUpload.assertAllowed(file);
         try {
@@ -31,8 +32,8 @@ public class CloudinaryService {
             options.put("unique_filename", false); // file trùng tên -> ko thêm hậu tố cho file mới
             options.put("use_filename", false); // không dùng tên gốc của file
 
-            if (publicIdHint != null && !publicIdHint.isBlank()) {
-                options.put("public_id", publicIdHint);
+            if (publicHintId != null && !publicHintId.isBlank()) {
+                options.put("public_id", publicHintId);
             }
 
             Map<String, Object> result = cloudinary.uploader().upload(file.getBytes(), options);
@@ -45,4 +46,16 @@ public class CloudinaryService {
             throw new StorageException("Failed to upload file to Cloudinary", e);
         }
     }
+
+    public void delete(String name) throws StorageException {
+        try {
+            if (name == null && name.isBlank()) {
+                return;
+            }
+            cloudinary.uploader().destroy(name, ObjectUtils.emptyMap());
+        } catch (Exception e) {
+            throw new StorageException("Failed to delete cloudinary resource: " + name, e);
+        }
+    }
+
 }

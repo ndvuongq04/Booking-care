@@ -36,9 +36,9 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    @PostMapping(value = "/accounts", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/accounts")
     @ApiMessage("Create new account")
-    public ResponseEntity<ResAccountDTO> createNewAccount(@Valid @ModelAttribute CreateAccountDTO reqAccount)
+    public ResponseEntity<ResAccountDTO> createNewAccount(@Valid @RequestBody CreateAccountDTO reqAccount)
             throws IdInvalidException, StorageException {
         boolean isEmailExits = this.accountService.isEmailExits(reqAccount.getEmail());
 

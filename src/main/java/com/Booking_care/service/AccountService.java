@@ -3,13 +3,11 @@ package com.Booking_care.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Role;
 import com.Booking_care.domain.dto.ResCloudinaryDTO;
@@ -21,7 +19,6 @@ import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.AccountRepository;
 import com.Booking_care.service.specification.AccountSpecs;
 import com.Booking_care.util.error.StorageException;
-import com.Booking_care.service.RoleService;
 
 @Service
 public class AccountService {
@@ -46,7 +43,7 @@ public class AccountService {
         return this.accountRepository.existsByEmail(email);
     }
 
-    public Account handleCreateAccount(CreateAccountDTO dto) throws StorageException {
+    public Account handleCreateAccount(CreateAccountDTO dto) {
         Account acc = new Account();
         acc.setName(dto.getName());
         acc.setEmail(dto.getEmail());
@@ -60,13 +57,6 @@ public class AccountService {
         if (dto.getRoleId() != null) {
             Role role = this.roleService.fetchRoleById(dto.getRoleId());
             acc.setRole(role != null ? role : null);
-        }
-
-        if (dto.getFile() != null && !dto.getFile().isEmpty()) {
-            ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(dto.getFile(), folder,
-                    dto.getName());
-            acc.setAvatar(resImg.getUrl());
-
         }
 
         return this.accountRepository.save(acc);
@@ -144,9 +134,10 @@ public class AccountService {
                 currentAcc.setRole(role != null ? role : null);
             }
 
+            // upload image
             if (acc.getFile() != null && !acc.getFile().isEmpty()) {
                 ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(acc.getFile(), folder,
-                        acc.getName());
+                        String.valueOf(currentAcc.getId()));
                 currentAcc.setAvatar(resImg.getUrl());
 
             }

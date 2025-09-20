@@ -1,7 +1,5 @@
 package com.Booking_care.domain.dto.ClinicDTO;
 
-import org.springframework.web.multipart.MultipartFile;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -13,9 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReqClinicDTO {
-    private long id;
-
+public class ReqCreateClinicDTO {
     @NotBlank(message = "Tên không được để trống")
     private String name;
 
@@ -29,9 +25,4 @@ public class ReqClinicDTO {
 
     @NotNull(message = "Địa chỉ không được để trống")
     private Long addressId;
-
-    private MultipartFile file;
-
-    private Boolean isActive;
-
 }

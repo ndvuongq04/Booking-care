@@ -12,12 +12,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.Booking_care.domain.Clinic;
-import com.Booking_care.domain.dto.ClinicDTO.ReqClinicDTO;
+import com.Booking_care.domain.dto.ClinicDTO.ReqUpdateClinicDTO;
+import com.Booking_care.domain.dto.ClinicDTO.ReqCreateClinicDTO;
 import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.ClinicService;
@@ -36,10 +34,10 @@ public class ClinicController {
         this.clinicService = clinicService;
     }
 
-    @PostMapping(value = "/clinics", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/clinics")
     @ApiMessage("Create new clinic")
-    public ResponseEntity<ResClinicDTO> createNewClinic(@Valid @ModelAttribute ReqClinicDTO reqClinic)
-            throws IdInvalidException, StorageException {
+    public ResponseEntity<ResClinicDTO> createNewClinic(@Valid @RequestBody ReqCreateClinicDTO reqClinic)
+            throws IdInvalidException {
         boolean isNameExits = this.clinicService.isNameExits(reqClinic.getName());
 
         if (isNameExits) {
@@ -86,7 +84,7 @@ public class ClinicController {
 
     @PutMapping(value = "/clinics", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Update a clinic")
-    public ResponseEntity<ResClinicDTO> updateAccount(@Valid @ModelAttribute ReqClinicDTO reqClinic)
+    public ResponseEntity<ResClinicDTO> updateAccount(@Valid @ModelAttribute ReqUpdateClinicDTO reqClinic)
             throws IdInvalidException, StorageException {
         Clinic c = this.clinicService.fetchClinicById(reqClinic.getId());
 

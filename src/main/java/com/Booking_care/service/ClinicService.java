@@ -2,16 +2,14 @@ package com.Booking_care.service;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.Booking_care.domain.Address;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.dto.ResCloudinaryDTO;
-import com.Booking_care.domain.dto.ClinicDTO.ReqClinicDTO;
+import com.Booking_care.domain.dto.ClinicDTO.ReqUpdateClinicDTO;
+import com.Booking_care.domain.dto.ClinicDTO.ReqCreateClinicDTO;
 import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.ClinicRepository;
@@ -36,16 +34,17 @@ public class ClinicService {
         return this.clinicRepository.existsByName(name);
     }
 
-    public Clinic handleCreateClinic(ReqClinicDTO c) throws StorageException {
+    public Clinic handleCreateClinic(ReqCreateClinicDTO c) {
 
         Clinic clinic = new Clinic();
 
-        if (c.getFile() != null && !c.getFile().isEmpty()) {
-            ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(c.getFile(), folder,
-                    c.getName());
-            clinic.setImage(resImg.getUrl());
+        // if (c.getFile() != null && !c.getFile().isEmpty()) {
+        // ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(c.getFile(),
+        // folder,
+        // c.getName());
+        // clinic.setImage(resImg.getUrl());
 
-        }
+        // }
 
         clinic.setName(c.getName());
         clinic.setDescription(c.getDescription());
@@ -96,7 +95,7 @@ public class ClinicService {
         }
     }
 
-    public Clinic handleUpdateClinic(ReqClinicDTO clinic) throws StorageException {
+    public Clinic handleUpdateClinic(ReqUpdateClinicDTO clinic) throws StorageException {
         Clinic c = this.fetchClinicById(clinic.getId());
         if (c != null) {
             c.setName(clinic.getName());
@@ -104,10 +103,10 @@ public class ClinicService {
             c.setPosition(clinic.getPosition());
             c.setIsActive(clinic.getIsActive());
 
-            // update img
+            // upload image
             if (clinic.getFile() != null && !clinic.getFile().isEmpty()) {
                 ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(clinic.getFile(), folder,
-                        clinic.getName());
+                        String.valueOf(c.getId()));
 
                 c.setImage(resImg.getUrl());
 
