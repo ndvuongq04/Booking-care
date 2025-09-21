@@ -12,10 +12,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import com.Booking_care.domain.Clinic;
-import com.Booking_care.domain.dto.ClinicDTO.ReqUpdateClinicDTO;
-import com.Booking_care.domain.dto.ClinicDTO.ReqCreateClinicDTO;
+import com.Booking_care.domain.dto.ClinicDTO.ReqClinicDTO;
 import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.ClinicService;
@@ -36,7 +37,7 @@ public class ClinicController {
 
     @PostMapping(value = "/clinics")
     @ApiMessage("Create new clinic")
-    public ResponseEntity<ResClinicDTO> createNewClinic(@Valid @RequestBody ReqCreateClinicDTO reqClinic)
+    public ResponseEntity<ResClinicDTO> createNewClinic(@Valid @RequestBody ReqClinicDTO reqClinic)
             throws IdInvalidException {
         boolean isNameExits = this.clinicService.isNameExits(reqClinic.getName());
 
@@ -82,17 +83,19 @@ public class ClinicController {
         return ResponseEntity.ok(null);
     }
 
-    @PutMapping(value = "/clinics", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/clinics/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Update a clinic")
-    public ResponseEntity<ResClinicDTO> updateAccount(@Valid @ModelAttribute ReqUpdateClinicDTO reqClinic)
+    public ResponseEntity<ResClinicDTO> updateAccount(@Valid @ModelAttribute ReqClinicDTO reqClinic,
+            @PathVariable("id") long id,
+            @RequestParam("file") MultipartFile file)
             throws IdInvalidException, StorageException {
-        Clinic c = this.clinicService.fetchClinicById(reqClinic.getId());
+        Clinic c = this.clinicService.fetchClinicById(id);
 
         if (c == null) {
-            throw new IdInvalidException("Clinic với id " + reqClinic.getId() + " không tồn tại");
+            throw new IdInvalidException("Clinic với id " + id + " không tồn tại");
         }
 
-        boolean isNameExits = this.clinicService.existsByNameAndIdNot(reqClinic.getName(), reqClinic.getId());
+        boolean isNameExits = this.clinicService.existsByNameAndIdNot(reqClinic.getName(), id);
         if (isNameExits) {
             throw new IdInvalidException(
                     "Name " + reqClinic.getName() + " đã tồn tại, Vui lòng sử dụng name khác.");
@@ -104,7 +107,7 @@ public class ClinicController {
                     "Address : " + reqClinic.getAddressId()
                             + " không tồn tại, Vui lòng sử dụng address khác.");
         }
-        Clinic clinic = this.clinicService.handleUpdateClinic(reqClinic);
+        Clinic clinic = this.clinicService.handleUpdateClinic(reqClinic, id, file);
 
         return ResponseEntity.ok(this.clinicService.convertToClinicDTO(clinic));
     }

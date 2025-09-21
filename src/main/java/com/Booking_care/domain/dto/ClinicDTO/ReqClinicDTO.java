@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReqCreateClinicDTO {
+public class ReqClinicDTO {
     @NotBlank(message = "Tên không được để trống")
     private String name;
 
@@ -25,4 +25,7 @@ public class ReqCreateClinicDTO {
 
     @NotNull(message = "Địa chỉ không được để trống")
     private Long addressId;
+
+    private Boolean isActive;
+
 }
