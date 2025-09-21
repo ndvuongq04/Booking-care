@@ -3,15 +3,14 @@ package com.Booking_care.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Role;
+import com.Booking_care.domain.dto.ResCloudinaryDTO;
 import com.Booking_care.domain.dto.AccountDTO.AccountCriteriaDTO;
 import com.Booking_care.domain.dto.AccountDTO.CreateAccountDTO;
 import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
@@ -19,20 +18,25 @@ import com.Booking_care.domain.dto.AccountDTO.UpdateAccountDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.AccountRepository;
 import com.Booking_care.service.specification.AccountSpecs;
-import com.Booking_care.service.RoleService;
+import com.Booking_care.util.error.StorageException;
 
 @Service
 public class AccountService {
     private final AccountRepository accountRepository;
     private final RoleService roleService;
     private final PasswordEncoder passwordEncoder;
+    private final CloudinaryService cloudinaryService;
+
+    private final String folder = "booking_care/account/";
 
     public AccountService(AccountRepository accountRepository,
             RoleService roleService,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            CloudinaryService cloudinaryService) {
         this.accountRepository = accountRepository;
         this.roleService = roleService;
         this.passwordEncoder = passwordEncoder;
+        this.cloudinaryService = cloudinaryService;
     }
 
     public boolean isEmailExits(String email) {
@@ -100,6 +104,7 @@ public class AccountService {
         res.setAddress(acc.getAddress());
         res.setBirth(acc.getBirth());
         res.setCccd(acc.getCccd());
+        res.setAvatar(acc.getAvatar());
         res.setCreateAt(acc.getCreateAt());
         res.setUpdateAt(acc.getUpdateAt());
 
@@ -114,7 +119,7 @@ public class AccountService {
         return null;
     }
 
-    public Account handleUpdateAccount(UpdateAccountDTO acc) {
+    public Account handleUpdateAccount(UpdateAccountDTO acc) throws StorageException {
         Account currentAcc = this.fetchAccountById(acc.getId());
         if (currentAcc != null) {
             currentAcc.setName(acc.getName());
@@ -128,6 +133,15 @@ public class AccountService {
                 Role role = this.roleService.fetchRoleById(acc.getRoleId());
                 currentAcc.setRole(role != null ? role : null);
             }
+
+            // upload image
+            if (acc.getFile() != null && !acc.getFile().isEmpty()) {
+                ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(acc.getFile(), folder,
+                        String.valueOf(currentAcc.getId()));
+                currentAcc.setAvatar(resImg.getUrl());
+
+            }
+
             currentAcc = this.accountRepository.save(currentAcc);
         }
 

@@ -1,5 +1,7 @@
 package com.Booking_care.domain.dto.AccountDTO;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.Booking_care.domain.enums.GenderEnum;
 
 import jakarta.validation.constraints.Email;
@@ -35,4 +37,7 @@ public class CreateAccountDTO {
     private GenderEnum gender;
     private String cccd;
     private Long roleId;
+
+    private MultipartFile file;
+
 }

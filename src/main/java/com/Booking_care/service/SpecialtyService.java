@@ -8,24 +8,41 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.Booking_care.domain.Specialty;
+import com.Booking_care.domain.dto.ResCloudinaryDTO;
+import com.Booking_care.domain.dto.SpecialtyDTO.ReqSpecialtyDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.SpecialtyRepository;
+import com.Booking_care.util.error.StorageException;
 
 @Service
 public class SpecialtyService {
     private final SpecialtyRepository specialtyRepository;
+    private final CloudinaryService cloudinaryService;
+    private final String folder = "booking_care/specialty/";
 
-    public SpecialtyService(SpecialtyRepository specialtyRepository) {
+    public SpecialtyService(SpecialtyRepository specialtyRepository,
+            CloudinaryService cloudinaryService) {
         this.specialtyRepository = specialtyRepository;
+        this.cloudinaryService = cloudinaryService;
     }
 
-    public Specialty handleCreateSpecialty(Specialty dto) {
+    public Specialty handleCreateSpecialty(ReqSpecialtyDTO dto) throws StorageException {
         Specialty s = new Specialty();
 
         s.setName(dto.getName());
         s.setDescription(dto.getDescription());
-        s.setImage(dto.getImage());
-        return specialtyRepository.save(s);
+        Specialty specialtyDb = specialtyRepository.save(s);
+
+        // upload images
+        if (dto.getFile() != null && !dto.getFile().isEmpty()) {
+            ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(dto.getFile(),
+                    folder,
+                    String.valueOf(specialtyDb.getId()));
+
+            specialtyDb.setImage(resImg.getUrl());
+        }
+
+        return specialtyRepository.save(specialtyDb);
     }
 
     public boolean isNameExits(String name) {
@@ -40,13 +57,21 @@ public class SpecialtyService {
         return specialtyRepository.findById(id).orElse(null);
     }
 
-    public Specialty handleUpdateSpecialty(Specialty dto) {
-        Specialty s = this.specialtyRepository.findById(dto.getId()).orElse(null);
+    public Specialty handleUpdateSpecialty(ReqSpecialtyDTO dto, long id) throws StorageException {
+        Specialty s = this.specialtyRepository.findById(id).orElse(null);
         if (s != null) {
             s.setName(dto.getName());
             s.setDescription(dto.getDescription());
-            s.setImage(dto.getImage());
             s.setIsActive(dto.getIsActive());
+
+            // upload images
+            if (dto.getFile() != null && !dto.getFile().isEmpty()) {
+                ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(dto.getFile(),
+                        folder,
+                        String.valueOf(s.getId()));
+
+                s.setImage(resImg.getUrl());
+            }
 
             this.specialtyRepository.save(s);
         }

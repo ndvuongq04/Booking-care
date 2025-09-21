@@ -2,9 +2,7 @@ package com.Booking_care.domain;
 
 import java.time.Instant;
 import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -15,8 +13,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,14 +29,11 @@ public class Clinic {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @NotBlank(message = "Tên không được để trống")
     private String name;
     private String description;
 
-    @NotBlank(message = "Vị trí không được để trống")
     private String position; // vị trí (có thể để toạ độ hoặc text)
 
-    @NotBlank(message = "Số điện thoại không được để trống")
     private String phoneNumber;
     private Boolean isActive = true;
 
@@ -61,7 +54,6 @@ public class Clinic {
     // Address
     @ManyToOne
     @JoinColumn(name = "address_id")
-    @NotNull(message = "Địa chỉ không được để trống")
     private Address address;
 
     // ClinicSpecialty

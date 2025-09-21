@@ -52,6 +52,8 @@ public class Account {
     private Instant updateAt;
     private String cccd;
 
+    private String avatar;
+
     @Column(columnDefinition = "MEDIUMTEXT")
     private String refreshToken;
 
