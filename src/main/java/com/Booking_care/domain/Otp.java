@@ -24,4 +24,8 @@ public class Otp {
     private Instant expiryTime;
     private Instant currentSubmit;
     private Long secondsLeft;
+
+    // account temp
+    private String password;
+    private String name;
 }

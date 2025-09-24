@@ -212,8 +212,8 @@ public class AuthController {
     }
 
     @PostMapping("/auth/register")
-    @ApiMessage("Register a new account")
-    public ResponseEntity<ResAccountDTO> register(@Valid @RequestBody CreateAccountDTO postManAccount)
+    @ApiMessage("Register a new account (send otp by email)")
+    public ResponseEntity<String> register(@Valid @RequestBody CreateAccountDTO postManAccount)
             throws IdInvalidException {
         boolean isEmailExist = this.accountService.isEmailExits(postManAccount.getEmail());
         if (isEmailExist) {
@@ -221,10 +221,12 @@ public class AuthController {
                     "Email " + postManAccount.getEmail() + "đã tồn tại, vui lòng sử dụng email khác.");
         }
 
-        String hashPassword = this.passwordEncoder.encode(postManAccount.getPassword());
-        postManAccount.setPassword(hashPassword);
-        Account acc = this.accountService.handleCreateAccount(postManAccount);
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.accountService.convertToResAccountDTO(acc));
+        // send email
+        this.emailService.sendEmailFromTemplateSync(postManAccount.getEmail(), "Xác thực email",
+                "templateForgotPassword", postManAccount.getName(),
+                this.otpService.generateOtp4Digits(postManAccount.getEmail()));
+
+        return ResponseEntity.ok("sent otp by email, please call api verify otp ");
     }
 
     @PutMapping("/auth/reset-password/{id}")
@@ -254,15 +256,23 @@ public class AuthController {
     }
 
     @PostMapping("/auth/verify-otp")
-    public Boolean handleVerifyOtp(@RequestBody Otp otp) {
+    public ResponseEntity<ResAccountDTO> handleVerifyOtp(@RequestBody Otp otp) throws IdInvalidException {
 
-        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-        // test email thật ( chưa có tài khoản)
-        email = "thangdepzai38@gmail.com";
+        // xác thực email
         otp.setCurrentSubmit(Instant.now());
-        otp.setEmail(email);
+        boolean verifyEmail = this.otpService.verify_otp(otp);
+        if (!verifyEmail) {
+            throw new IdInvalidException("Otp không hợp lệ");
+        }
 
-        return this.otpService.verify_otp(otp);
+        // ok -> tạo
+        CreateAccountDTO acc = new CreateAccountDTO();
+        acc.setPassword(otp.getPassword());
+        acc.setEmail(otp.getEmail());
+        acc.setName(otp.getName());
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(this.accountService.convertToResAccountDTO(this.accountService.handleCreateAccount(acc)));
     }
 
 }

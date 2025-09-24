@@ -8,7 +8,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.Booking_care.domain.Account;
+import com.Booking_care.domain.Otp;
 import com.Booking_care.domain.Role;
 import com.Booking_care.domain.dto.ResCloudinaryDTO;
 import com.Booking_care.domain.dto.AccountDTO.AccountCriteriaDTO;
@@ -26,17 +29,23 @@ public class AccountService {
     private final RoleService roleService;
     private final PasswordEncoder passwordEncoder;
     private final CloudinaryService cloudinaryService;
+    private final EmailService emailService;
+    private final OtpService otpService;
 
     private final String folder = "booking_care/account/";
 
     public AccountService(AccountRepository accountRepository,
             RoleService roleService,
             PasswordEncoder passwordEncoder,
-            CloudinaryService cloudinaryService) {
+            CloudinaryService cloudinaryService,
+            EmailService emailService,
+            OtpService otpService) {
         this.accountRepository = accountRepository;
         this.roleService = roleService;
         this.passwordEncoder = passwordEncoder;
         this.cloudinaryService = cloudinaryService;
+        this.emailService = emailService;
+        this.otpService = otpService;
     }
 
     public boolean isEmailExits(String email) {
@@ -53,11 +62,9 @@ public class AccountService {
         acc.setGender(dto.getGender());
         acc.setCccd(dto.getCccd());
 
-        // set role
-        if (dto.getRoleId() != null) {
-            Role role = this.roleService.fetchRoleById(dto.getRoleId());
-            acc.setRole(role != null ? role : null);
-        }
+        // set role default Client (id = 4)
+        Role role = this.roleService.fetchRoleById(4);
+        acc.setRole(role);
 
         return this.accountRepository.save(acc);
     }
