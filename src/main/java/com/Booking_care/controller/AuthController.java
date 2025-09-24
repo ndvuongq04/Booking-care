@@ -15,20 +15,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.oauth2.jwt.Jwt;
 import com.Booking_care.domain.Account;
+import com.Booking_care.domain.Otp;
 import com.Booking_care.domain.dto.AccountDTO.CreateAccountDTO;
 import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
+import com.Booking_care.domain.dto.AuthDTO.PasswordDTO;
 import com.Booking_care.domain.dto.AuthDTO.ReqLoginDTO;
 import com.Booking_care.domain.dto.AuthDTO.ResLoginDTO;
 import com.Booking_care.service.AccountService;
+import com.Booking_care.service.EmailService;
+import com.Booking_care.service.OtpService;
 import com.Booking_care.util.SecurityUtil;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
 import org.springframework.beans.factory.annotation.Value;
-
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -37,6 +44,8 @@ public class AuthController {
     private final AccountService accountService;
     private final SecurityUtil securityUtil;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+    private final OtpService otpService;
 
     @Value("${booking-care.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpiration;
@@ -44,11 +53,15 @@ public class AuthController {
     public AuthController(AccountService accountService,
             AuthenticationManagerBuilder authenticationManagerBuilder,
             SecurityUtil securityUtil,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            EmailService emailService,
+            OtpService otpService) {
         this.accountService = accountService;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.securityUtil = securityUtil;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
+        this.otpService = otpService;
     }
 
     @PostMapping("/auth/login")
@@ -213,4 +226,43 @@ public class AuthController {
         Account acc = this.accountService.handleCreateAccount(postManAccount);
         return ResponseEntity.status(HttpStatus.CREATED).body(this.accountService.convertToResAccountDTO(acc));
     }
+
+    @PutMapping("/auth/reset-password/{id}")
+    @ApiMessage("Reset password")
+    public ResponseEntity<Void> putMethodName(@PathVariable long id, @RequestBody PasswordDTO passwordDTO)
+            throws IdInvalidException {
+        Account acc = this.accountService.fetchAccountById(id);
+        if (acc == null) {
+            throw new IdInvalidException("id không tồn tại");
+        }
+        if (!passwordEncoder.matches(passwordDTO.getPassword(), acc.getPassword())) {
+            throw new IdInvalidException("Mật khẩu hiện tại không đúng");
+        }
+
+        this.accountService.handleResetPassword(id, passwordDTO.getNewPassword());
+
+        return ResponseEntity.ok(null);
+    }
+
+    @GetMapping("/email")
+    public String testEmail() {
+        this.emailService.sendEmailFromTemplateSync("thangdepzai38@gmail.com", "Thông báo lịch khám",
+                "templateForgotPassword",
+                "văn An",
+                this.otpService.generateOtp4Digits("thangdepzai38@gmail.com"));
+        return "ok";
+    }
+
+    @PostMapping("/auth/verify-otp")
+    public Boolean handleVerifyOtp(@RequestBody Otp otp) {
+
+        String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
+        // test email thật ( chưa có tài khoản)
+        email = "thangdepzai38@gmail.com";
+        otp.setCurrentSubmit(Instant.now());
+        otp.setEmail(email);
+
+        return this.otpService.verify_otp(otp);
+    }
+
 }

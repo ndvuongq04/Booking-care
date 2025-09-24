@@ -236,4 +236,12 @@ public class AccountService {
         return this.accountRepository.findByRefreshTokenAndEmail(token, email);
     }
 
+    public void handleResetPassword(long id, String newPass) {
+        Account acc = this.fetchAccountById(id);
+        if (acc != null) {
+            acc.setPassword(passwordEncoder.encode(newPass));
+            acc = this.accountRepository.save(acc);
+        }
+
+    }
 }
