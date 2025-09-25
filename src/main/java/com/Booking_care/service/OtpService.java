@@ -58,4 +58,8 @@ public class OtpService {
         return true;
     }
 
+    public void invalidateOtp(String email) {
+        this.otpRepository.deleteById(email);
+    }
+
 }

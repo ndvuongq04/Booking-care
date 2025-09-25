@@ -18,9 +18,11 @@ import com.Booking_care.domain.dto.AccountDTO.AccountCriteriaDTO;
 import com.Booking_care.domain.dto.AccountDTO.CreateAccountDTO;
 import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
 import com.Booking_care.domain.dto.AccountDTO.UpdateAccountDTO;
+import com.Booking_care.domain.dto.AuthDTO.ResetPasswordRequest;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.AccountRepository;
 import com.Booking_care.service.specification.AccountSpecs;
+import com.Booking_care.util.error.IdInvalidException;
 import com.Booking_care.util.error.StorageException;
 
 @Service
@@ -249,6 +251,15 @@ public class AccountService {
             acc.setPassword(passwordEncoder.encode(newPass));
             acc = this.accountRepository.save(acc);
         }
+    }
 
+    public Account forgotPassword(ResetPasswordRequest reset) throws IdInvalidException {
+        Account acc = this.fetchAccountByEmail(reset.getEmail());
+        if (acc == null) {
+            throw new IdInvalidException("Email không tồn tại");
+        }
+        acc.setPassword(passwordEncoder.encode(reset.getPassword()));
+
+        return this.accountRepository.save(acc);
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.oauth2.jwt.Jwt;
 import com.Booking_care.domain.Account;
@@ -21,6 +22,7 @@ import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
 import com.Booking_care.domain.dto.AuthDTO.PasswordDTO;
 import com.Booking_care.domain.dto.AuthDTO.ReqLoginDTO;
 import com.Booking_care.domain.dto.AuthDTO.ResLoginDTO;
+import com.Booking_care.domain.dto.AuthDTO.ResetPasswordRequest;
 import com.Booking_care.service.AccountService;
 import com.Booking_care.service.EmailService;
 import com.Booking_care.service.OtpService;
@@ -49,6 +51,8 @@ public class AuthController {
 
     @Value("${booking-care.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpiration;
+    private final String templateForgotPassword = "templateForgotPassword";
+    private final String templateVerifyEmail = "templateVerifyEmail";
 
     public AuthController(AccountService accountService,
             AuthenticationManagerBuilder authenticationManagerBuilder,
@@ -223,10 +227,10 @@ public class AuthController {
 
         // send email
         this.emailService.sendEmailFromTemplateSync(postManAccount.getEmail(), "Xác thực email",
-                "templateForgotPassword", postManAccount.getName(),
+                templateVerifyEmail, postManAccount.getName(),
                 this.otpService.generateOtp4Digits(postManAccount.getEmail()));
 
-        return ResponseEntity.ok("sent otp by email, please call api verify otp ");
+        return ResponseEntity.ok("sent otp by email, please call api create verify otp ");
     }
 
     @PutMapping("/auth/reset-password/{id}")
@@ -246,16 +250,7 @@ public class AuthController {
         return ResponseEntity.ok(null);
     }
 
-    @GetMapping("/email")
-    public String testEmail() {
-        this.emailService.sendEmailFromTemplateSync("thangdepzai38@gmail.com", "Thông báo lịch khám",
-                "templateForgotPassword",
-                "văn An",
-                this.otpService.generateOtp4Digits("thangdepzai38@gmail.com"));
-        return "ok";
-    }
-
-    @PostMapping("/auth/verify-otp")
+    @PostMapping("/auth/create-verify-otp")
     public ResponseEntity<ResAccountDTO> handleVerifyOtp(@RequestBody Otp otp) throws IdInvalidException {
 
         // xác thực email
@@ -265,6 +260,9 @@ public class AuthController {
             throw new IdInvalidException("Otp không hợp lệ");
         }
 
+        // xóa OTP sau khi dùng xong
+        this.otpService.invalidateOtp(otp.getEmail());
+
         // ok -> tạo
         CreateAccountDTO acc = new CreateAccountDTO();
         acc.setPassword(otp.getPassword());
@@ -273,6 +271,47 @@ public class AuthController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(this.accountService.convertToResAccountDTO(this.accountService.handleCreateAccount(acc)));
+    }
+
+    @GetMapping("/auth/forgot-password-send-email")
+    @ApiMessage("Forgot password (send otp by email)")
+    public ResponseEntity<String> forgotPassword(@RequestParam String email)
+            throws IdInvalidException {
+        // send email
+        this.emailService.sendEmailFromTemplateSync(email, "Đặt lại mật khẩu",
+                templateForgotPassword, null,
+                this.otpService.generateOtp4Digits(email));
+
+        return ResponseEntity.ok("sent otp by email, please call api forgot verify otp ");
+    }
+
+    @PostMapping("/auth/forgot-verify-otp")
+    public ResponseEntity<String> handleVerifyOtpForgotPassword(@RequestBody Otp otp) throws IdInvalidException {
+
+        // xác thực email
+        otp.setCurrentSubmit(Instant.now());
+        boolean verifyEmail = this.otpService.verify_otp(otp);
+        if (!verifyEmail) {
+            throw new IdInvalidException("Otp không hợp lệ");
+        }
+
+        // xóa OTP sau khi dùng xong
+        this.otpService.invalidateOtp(otp.getEmail());
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body("verify otp OK, please call api forgot password ");
+    }
+
+    @PostMapping("/auth/forgot-password")
+    @ApiMessage("Forgot password")
+    public ResponseEntity<ResAccountDTO> handleVerifyOtpForgotPassword(@RequestBody ResetPasswordRequest reset)
+            throws IdInvalidException {
+
+        ResAccountDTO acc = this.accountService.convertToResAccountDTO(
+                this.accountService.forgotPassword(reset));
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(acc);
     }
 
 }
