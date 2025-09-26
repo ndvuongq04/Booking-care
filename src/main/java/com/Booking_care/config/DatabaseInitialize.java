@@ -8,10 +8,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.Booking_care.domain.Account;
+import com.Booking_care.domain.Address;
 import com.Booking_care.domain.Role;
 import com.Booking_care.domain.Time;
 import com.Booking_care.domain.enums.GenderEnum;
 import com.Booking_care.repository.AccountRepository;
+import com.Booking_care.repository.AddressRepository;
 import com.Booking_care.repository.RoleRepository;
 import com.Booking_care.repository.TimeRepository;
 
@@ -21,15 +23,18 @@ public class DatabaseInitialize implements CommandLineRunner {
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final TimeRepository timeRepository;
+    private final AddressRepository addressRepository;
 
     public DatabaseInitialize(RoleRepository roleRepository,
             AccountRepository accountRepository,
             PasswordEncoder passwordEncoder,
-            TimeRepository timeRepository) {
+            TimeRepository timeRepository,
+            AddressRepository addressRepository) {
         this.roleRepository = roleRepository;
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
         this.timeRepository = timeRepository;
+        this.addressRepository = addressRepository;
     }
 
     @Override
@@ -93,6 +98,25 @@ public class DatabaseInitialize implements CommandLineRunner {
                     new Time(0, "15:30", "16:00", null, null, null),
                     new Time(0, "16:00", "16:30", null, null, null));
             this.timeRepository.saveAll(slots);
+        }
+
+        //
+        long countAddress = this.addressRepository.count();
+        if (countAddress == 0) {
+            List<Address> cities = List.of(
+                    new Address(0, "Hà Nội", true, null, null, null),
+                    new Address(0, "TP. Hồ Chí Minh", true, null, null, null),
+                    new Address(0, "Đà Nẵng", true, null, null, null),
+                    new Address(0, "Hải Phòng", true, null, null, null),
+                    new Address(0, "Cần Thơ", true, null, null, null),
+                    new Address(0, "Bắc Ninh", true, null, null, null),
+                    new Address(0, "Quảng Ninh", true, null, null, null),
+                    new Address(0, "Nghệ An", true, null, null, null),
+                    new Address(0, "Thừa Thiên Huế", true, null, null, null),
+                    new Address(0, "Khánh Hòa", true, null, null, null),
+                    new Address(0, "Bình Dương", true, null, null, null),
+                    new Address(0, "Đồng Nai", true, null, null, null));
+            this.addressRepository.saveAll(cities);
         }
 
         System.out.println(">>> END INIT DATABASE");
