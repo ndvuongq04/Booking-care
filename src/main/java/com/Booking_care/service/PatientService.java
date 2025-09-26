@@ -31,6 +31,9 @@ public class PatientService {
     }
 
     public ResPatientDTO convertToResPatientDTO(Patient patient) {
+        if (patient == null)
+            return null;
+
         ResPatientDTO resPatientDTO = new ResPatientDTO();
 
         resPatientDTO.setId(patient.getId());

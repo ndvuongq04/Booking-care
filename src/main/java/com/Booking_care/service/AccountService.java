@@ -96,6 +96,9 @@ public class AccountService {
     }
 
     public ResAccountDTO convertToResAccountDTO(Account acc) {
+        if (acc == null)
+            return null;
+
         ResAccountDTO res = new ResAccountDTO();
         ResAccountDTO.RoleAccount roleAccount = new ResAccountDTO.RoleAccount();
 

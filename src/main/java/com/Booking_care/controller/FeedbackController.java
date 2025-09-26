@@ -13,9 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Feedback;
+import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.dto.ResFeedbackDTO;
+import com.Booking_care.domain.dto.FeedbackDTO.ReqFeedbackDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.FeedbackService;
+import com.Booking_care.service.PatientService;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
 
@@ -25,9 +28,12 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/v1/feedbacks")
 public class FeedbackController {
     private final FeedbackService feedbackService;
+    private final PatientService patientService;
 
-    public FeedbackController(FeedbackService feedbackService) {
+    public FeedbackController(FeedbackService feedbackService,
+            PatientService patientService) {
         this.feedbackService = feedbackService;
+        this.patientService = patientService;
     }
 
     @GetMapping("/{id}")
@@ -53,12 +59,17 @@ public class FeedbackController {
     }
 
     @PostMapping
-    public ResponseEntity<ResFeedbackDTO> handleCreateFeedback(@Valid @RequestBody Feedback feedback)
+    public ResponseEntity<ResFeedbackDTO> handleCreateFeedback(@Valid @RequestBody ReqFeedbackDTO feedback)
             throws IdInvalidException {
 
-        Doctor doctor = this.feedbackService.fetchDoctorById(feedback.getDoctor().getId());
+        Doctor doctor = this.feedbackService.fetchDoctorById(feedback.getDoctorId());
         if (doctor == null) {
-            throw new IdInvalidException("Doctor với id " + feedback.getDoctor().getId() + " không tồn tại");
+            throw new IdInvalidException("Doctor với id " + feedback.getDoctorId() + " không tồn tại");
+        }
+
+        Patient patient = this.patientService.fetchPatientById(feedback.getPatientId());
+        if (patient == null) {
+            throw new IdInvalidException("Patient với id " + feedback.getPatientId() + " không tồn tại");
         }
 
         Feedback feedbackDB = this.feedbackService.handleCreateFeedback(feedback);

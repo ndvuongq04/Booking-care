@@ -39,6 +39,11 @@ public class Feedback {
     @JoinColumn(name = "doctor_id")
     private Doctor doctor;
 
+    // Patient
+    @ManyToOne
+    @JoinColumn(name = "patient_id")
+    private Patient patient;
+
     @PrePersist
     public void handleBeforeCreate() {
         this.createAt = Instant.now();

@@ -7,20 +7,29 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Feedback;
+import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.dto.ResFeedbackDTO;
+import com.Booking_care.domain.dto.FeedbackDTO.ReqFeedbackDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.FeedbackRepository;
+import com.Booking_care.util.error.IdInvalidException;
 
 @Service
 public class FeedbackService {
     private final FeedbackRepository feedbackRepository;
     private final DoctorService doctorService;
+    private final PatientService patientService;
 
-    public FeedbackService(FeedbackRepository feedbackRepository, DoctorService doctorService) {
+    public FeedbackService(FeedbackRepository feedbackRepository,
+            DoctorService doctorService,
+            PatientService patientService) {
         this.feedbackRepository = feedbackRepository;
         this.doctorService = doctorService;
+        this.patientService = patientService;
     }
 
     public Doctor fetchDoctorById(long id) {
@@ -62,8 +71,16 @@ public class FeedbackService {
         return null;
     }
 
-    public Feedback handleCreateFeedback(Feedback feedback) {
-        return this.feedbackRepository.save(feedback);
+    @Transactional
+    public Feedback handleCreateFeedback(ReqFeedbackDTO req) {
+        Feedback fb = new Feedback();
+        fb.setRate(req.getRate());
+        fb.setDescription(req.getDescription());
+
+        fb.setDoctor(this.doctorService.fetchDoctorById(req.getDoctorId()));
+        fb.setPatient(this.patientService.fetchPatientById(req.getDoctorId()));
+
+        return this.feedbackRepository.save(fb);
     }
 
     public Feedback handleUpdateFeedback(Feedback feedback) {
@@ -84,13 +101,25 @@ public class FeedbackService {
         this.feedbackRepository.deleteById(id);
     }
 
-    public ResFeedbackDTO convertToResFeedbackDTO(Feedback feedback) {
+    public ResFeedbackDTO convertToResFeedbackDTO(Feedback fb) {
+        if (fb == null)
+            return null;
         ResFeedbackDTO res = new ResFeedbackDTO();
-        res.setId(feedback.getId());
-        res.setDescription(feedback.getDescription());
+        res.setId(fb.getId());
+        res.setDescription(fb.getDescription());
+        res.setRate(fb.getRate());
 
-        Doctor doctor = this.doctorService.fetchDoctorById(feedback.getDoctor().getId());
-        res.setDoctor(this.doctorService.convertToDoctorDTO(doctor));
+        // doctor
+        Doctor doctor = fb.getDoctor();
+        if (doctor != null) {
+            res.setDoctor(doctorService.convertToDoctorDTO(doctor));
+        }
+
+        // patient
+        Patient patient = fb.getPatient();
+        if (patient != null) {
+            res.setPatient(patientService.convertToResPatientDTO(patient));
+        }
 
         return res;
     }
