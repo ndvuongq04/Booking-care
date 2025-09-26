@@ -55,6 +55,7 @@ public class DoctorService {
         dto.setIsActive(doctor.getIsActive());
         dto.setCreateAt(doctor.getCreateAt());
         dto.setUpdateAt(doctor.getUpdateAt());
+        dto.setCost((doctor.getCost()));
 
         if (doctor.getAccount() != null) {
             dto.setAccount(this.accountService.convertToResAccountDTO(doctor.getAccount()));

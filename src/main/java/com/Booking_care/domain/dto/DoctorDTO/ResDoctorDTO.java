@@ -1,5 +1,6 @@
 package com.Booking_care.domain.dto.DoctorDTO;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
@@ -20,6 +21,7 @@ public class ResDoctorDTO {
     private Boolean isActive;
     private Instant createAt;
     private Instant updateAt;
+    private BigDecimal cost;
     private ResAccountDTO account;
     private ResClinicDTO clinic;
     private String specialtyName;
