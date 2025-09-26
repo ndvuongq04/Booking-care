@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Patient;
+import com.Booking_care.domain.dto.PatientDTO.ReqPatientDTO;
 import com.Booking_care.domain.dto.PatientDTO.ResPatientDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.AccountService;
@@ -38,17 +39,10 @@ public class PatientController {
 
     @PostMapping("/patients")
     @ApiMessage("Create new patient")
-    public ResponseEntity<ResPatientDTO> createNewPatient(@Valid @RequestBody Patient reqPatient)
+    public ResponseEntity<ResPatientDTO> createNewPatient(@Valid @RequestBody ReqPatientDTO reqPatient)
             throws IdInvalidException {
-        String email = SecurityUtil.getCurrentUserLogin().isPresent()
-                ? SecurityUtil.getCurrentUserLogin().get()
-                : "";
 
-        if (email == null) {
-            throw new IdInvalidException("Bạn chưa đăng nhập hoặc không lấy được email người dùng");
-        }
-
-        Account acc = this.accountService.fetchAccountByEmail(email);
+        Account acc = this.accountService.fetchAccountById(reqPatient.getAccountId());
         if (acc == null) {
             throw new IdInvalidException("Account không tồn tại");
         }
@@ -57,7 +51,6 @@ public class PatientController {
             throw new IdInvalidException("Account đã tồn tại tài khoản bệnh nhân");
         }
 
-        reqPatient.setAccount(acc);
         Patient patient = this.patientService.handleCreatePatient(reqPatient);
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -85,31 +78,32 @@ public class PatientController {
                 .body(this.patientService.convertToResPatientDTO(patient));
     }
 
-    @PutMapping("/patients")
+    @PutMapping("/patients/{id}")
     @ApiMessage("Update a patient")
-    public ResponseEntity<ResPatientDTO> updatePatient(@Valid @RequestBody Patient reqPatient)
+    public ResponseEntity<ResPatientDTO> updatePatient(@PathVariable("id") long id,
+            @Valid @RequestBody ReqPatientDTO reqPatient)
             throws IdInvalidException {
-        Patient patient = this.patientService.handleUpdatePatient(reqPatient);
+        Patient patient = this.patientService.handleUpdatePatient(reqPatient, id);
 
         if (patient == null) {
-            throw new IdInvalidException("Patient với id " + reqPatient.getId() + " không tồn tại");
+            throw new IdInvalidException("Patient với id " + id + " không tồn tại");
         }
 
         return ResponseEntity.ok(this.patientService.convertToResPatientDTO(patient));
     }
 
-    // @DeleteMapping("patients/{id}")
-    // @ApiMessage("Delete a patient")
-    // public ResponseEntity<Void> deletePatientById(@PathVariable("id") long id)
-    // throws IdInvalidException {
-    // Patient patient = this.patientService.fetchPatientById(id);
+    @DeleteMapping("patients/{id}")
+    @ApiMessage("Delete a patient")
+    public ResponseEntity<Void> deletePatientById(@PathVariable("id") long id)
+            throws IdInvalidException {
+        Patient patient = this.patientService.fetchPatientById(id);
 
-    // if (patient == null) {
-    // throw new IdInvalidException("Patient với id " + id + " không tồn tại");
-    // }
-    // this.patientService.handleDeletePatient(patient.getId());
+        if (patient == null) {
+            throw new IdInvalidException("Patient với id " + id + " không tồn tại");
+        }
+        this.patientService.handleDeletePatient(patient.getId());
 
-    // return ResponseEntity.ok(null);
-    // }
+        return ResponseEntity.ok(null);
+    }
 
 }

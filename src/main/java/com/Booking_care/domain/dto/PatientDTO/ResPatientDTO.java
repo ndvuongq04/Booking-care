@@ -15,5 +15,6 @@ import lombok.AllArgsConstructor;
 public class ResPatientDTO {
     private Long id;
     private String bhyt;
+    private Boolean isActive;
     private ResAccountDTO account;
 }

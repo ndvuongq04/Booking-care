@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,6 +30,8 @@ public class Patient {
     private long id;
 
     private String bhyt; // Bảo hiểm y tế
+
+    private Boolean isActive = true;
 
     // Account
     @OneToOne
@@ -51,5 +54,13 @@ public class Patient {
     @OneToMany(mappedBy = "patient")
     @JsonIgnore
     private List<Feedback> feedbacks;
+
+    @PrePersist
+    public void handleBeforeCreate() {
+        if (isActive == null) {
+            isActive = true;
+        }
+
+    }
 
 }

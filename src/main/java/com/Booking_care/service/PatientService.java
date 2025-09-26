@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Patient;
+import com.Booking_care.domain.dto.PatientDTO.ReqPatientDTO;
 import com.Booking_care.domain.dto.PatientDTO.ResPatientDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.PatientRepository;
@@ -26,8 +27,11 @@ public class PatientService {
         this.accountService = accountService;
     }
 
-    public Patient handleCreatePatient(Patient reqPatient) {
-        return this.patientRepository.save(reqPatient);
+    public Patient handleCreatePatient(ReqPatientDTO reqPatient) {
+        Patient p = new Patient();
+        p.setAccount(this.accountService.fetchAccountById(reqPatient.getAccountId()));
+        p.setBhyt(reqPatient.getBhyt());
+        return this.patientRepository.save(p);
     }
 
     public ResPatientDTO convertToResPatientDTO(Patient patient) {
@@ -38,6 +42,7 @@ public class PatientService {
 
         resPatientDTO.setId(patient.getId());
         resPatientDTO.setBhyt(patient.getBhyt());
+        resPatientDTO.setIsActive(patient.getIsActive());
 
         resPatientDTO.setAccount(this.accountService.convertToResAccountDTO(patient.getAccount()));
 
@@ -82,8 +87,8 @@ public class PatientService {
         return null;
     }
 
-    public Patient handleUpdatePatient(Patient reqPatient) {
-        Patient patient = this.fetchPatientById(reqPatient.getId());
+    public Patient handleUpdatePatient(ReqPatientDTO reqPatient, long id) {
+        Patient patient = this.fetchPatientById(id);
         if (patient != null) {
             patient.setBhyt(reqPatient.getBhyt());
             this.patientRepository.save(patient);
@@ -96,10 +101,9 @@ public class PatientService {
     public void handleDeletePatient(long id) {
         Patient patient = this.fetchPatientById(id);
         if (patient != null) {
-            patient.setAccount(null);
+            patient.setIsActive(false);
             this.patientRepository.save(patient);
         }
-        this.patientRepository.deleteById(id);
     }
 
 }
