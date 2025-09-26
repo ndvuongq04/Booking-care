@@ -33,6 +33,12 @@ public class ServiceController {
     public ResponseEntity<ResServicesDTO> createNewService(@Valid @RequestBody Services reqService)
             throws IdInvalidException {
 
+        boolean isNameExits = this.servicesService.isNameExits(reqService.getName());
+        if (isNameExits) {
+            throw new IdInvalidException(
+                    "Tên Dịch vụ'" + reqService.getName() + "' đã tồn tại, vui lòng chọn tên khác");
+        }
+
         Services services = this.servicesService.handleCreateService(reqService);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(this.servicesService.handleConvertToResServicesDTO(services));

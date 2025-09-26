@@ -92,4 +92,8 @@ public class ServicesService {
         return services;
     }
 
+    public boolean isNameExits(String name) {
+        return this.serviceRepository.existsByName(name);
+    }
+
 }
