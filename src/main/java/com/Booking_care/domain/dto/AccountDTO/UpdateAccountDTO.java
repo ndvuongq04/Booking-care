@@ -1,5 +1,7 @@
 package com.Booking_care.domain.dto.AccountDTO;
 
+import java.time.LocalDate;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import com.Booking_care.domain.enums.GenderEnum;
@@ -29,6 +31,7 @@ public class UpdateAccountDTO {
     private String address;
     private GenderEnum gender;
     private String cccd;
+    private LocalDate birth;
     private Long roleId;
 
     private MultipartFile file;

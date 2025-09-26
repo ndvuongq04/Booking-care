@@ -136,6 +136,7 @@ public class AccountService {
             currentAcc.setAddress(acc.getAddress());
             currentAcc.setGender(acc.getGender());
             currentAcc.setCccd(acc.getCccd());
+            currentAcc.setBirth(acc.getBirth());
 
             // set role
             if (acc.getRoleId() != null) {
