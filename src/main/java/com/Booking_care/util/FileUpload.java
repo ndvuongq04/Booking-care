@@ -14,7 +14,7 @@ import com.Booking_care.util.error.StorageException;
 
 @Component
 public class FileUpload {
-    public static final long MAX_FILE_SIZE = 2L * 1024 * 1024;
+    public static final long MAX_FILE_SIZE = 7L * 1024 * 1024;
 
     public static final Set<String> ALLOWED_EXTS = Set.of("jpg", "jpeg", "png", "gif", "bmp", "web");
 
