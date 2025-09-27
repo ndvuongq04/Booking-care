@@ -17,4 +17,6 @@ public interface AccountRepository extends JpaRepository<Account, Long>, JpaSpec
 
     Account findByRefreshTokenAndEmail(String token, String email);
 
+    boolean existsByIdAndRole_NameIgnoreCase(Long id, String roleName);
+
 }

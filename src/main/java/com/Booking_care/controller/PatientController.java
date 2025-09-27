@@ -16,6 +16,7 @@ import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.dto.PatientDTO.ReqPatientDTO;
 import com.Booking_care.domain.dto.PatientDTO.ResPatientDTO;
+import com.Booking_care.domain.enums.RoleName;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.AccountProfile;
 import com.Booking_care.service.AccountService;
@@ -51,8 +52,11 @@ public class PatientController {
         }
 
         this.accountProfile.accountUsed(reqPatient.getAccountId());
-        if (this.patientService.isAccountExits(acc.getId())) {
-            throw new IdInvalidException("Account đã tồn tại tài khoản bệnh nhân");
+        // check role account
+        boolean checkRole = this.accountProfile.accountHasRole(reqPatient.getAccountId(), RoleName.CLIENT);
+        if (!checkRole) {
+            throw new IdInvalidException(
+                    "Account id :" + reqPatient.getAccountId() + " không có quyền " + RoleName.CLIENT);
         }
 
         Patient patient = this.patientService.handleCreatePatient(reqPatient);

@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.dto.DoctorDTO.ResDoctorDTO;
 import com.Booking_care.domain.dto.DoctorDTO.UpdateDoctorDTO;
+import com.Booking_care.domain.enums.RoleName;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.AccountProfile;
 import com.Booking_care.service.ClinicService;
@@ -49,6 +50,12 @@ public class DoctorController {
         }
 
         this.accountProfile.accountUsed(doctor.getAccount().getId());
+        // check role account
+        boolean checkRole = this.accountProfile.accountHasRole(doctor.getAccount().getId(), RoleName.DOCTOR);
+        if (!checkRole) {
+            throw new IdInvalidException(
+                    "Account id :" + doctor.getAccount().getId() + " không có quyền " + RoleName.DOCTOR);
+        }
 
         if (this.doctorService.isAccountExits(doctor.getAccount().getId())) {
             throw new IdInvalidException(

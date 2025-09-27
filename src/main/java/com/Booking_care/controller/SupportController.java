@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Support;
 import com.Booking_care.domain.dto.SupportDTO.ResSupportDTO;
+import com.Booking_care.domain.enums.RoleName;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.AccountProfile;
 import com.Booking_care.service.ClinicService;
@@ -68,9 +69,11 @@ public class SupportController {
         }
 
         this.accountProfile.accountUsed(support.getAccount().getId());
-        if (this.supportService.isAccountExits(acc.getId())) {
+        // check role account
+        boolean checkRole = this.accountProfile.accountHasRole(support.getAccount().getId(), RoleName.SUPPORT);
+        if (!checkRole) {
             throw new IdInvalidException(
-                    "Account với id " + support.getAccount().getId() + " đã được sử dụng cho một trợ lý khác");
+                    "Account id :" + support.getAccount().getId() + " không có quyền " + RoleName.SUPPORT);
         }
 
         if (this.clinicService.fetchClinicById(support.getClinic().getId()) == null) {
