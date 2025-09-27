@@ -7,6 +7,8 @@ import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.Booking;
 import com.Booking_care.service.BookingService;
+import com.Booking_care.service.EmailService;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Pageable;
 import com.Booking_care.util.annotation.ApiMessage;
@@ -41,7 +43,9 @@ public class BookingController {
     @ApiMessage("Create new booking")
     public ResponseEntity<ResBookingDTO> create(@RequestBody CreateBookingDTO req)
             throws IdInvalidException, BusinessException {
-        return ResponseEntity.ok(this.bookingService.convertToBookingDTO(this.bookingService.createBooking(req)));
+
+        Booking b = this.bookingService.createBooking(req);
+        return ResponseEntity.ok(this.bookingService.convertToBookingDTO(b));
     }
 
     // Get all bookings

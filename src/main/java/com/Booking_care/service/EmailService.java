@@ -61,7 +61,7 @@ public class EmailService {
         Context context = new Context();
         context.setVariable("name", username);
         context.setVariable("email", to);
-        context.setVariable("otp", value);
+        context.setVariable("value", value);
 
         String content = this.templateEngine.process(templateName, context);
         this.sendEmailSync(to, subject, content, false, true);

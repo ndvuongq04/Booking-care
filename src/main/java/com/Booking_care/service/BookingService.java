@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Booking;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Doctor;
@@ -34,19 +36,24 @@ public class BookingService {
     private final DoctorService doctorService;
     private final ClinicService clinicService;
     private final PatientService patientService;
+    private final EmailService emailService;
+    private final String templateBookingSuccess = "templateBookingSuccess";
+    private final String templateBookingCancel = "templateBookingCancel";
 
     public BookingService(BookingRepository bookingRepository,
             TimeService timeService,
             DoctorService doctorService,
             ClinicService clinicService,
             AccountService accountService,
-            PatientService patientService) {
+            PatientService patientService,
+            EmailService emailService) {
         this.bookingRepository = bookingRepository;
         this.timeService = timeService;
         this.doctorService = doctorService;
         this.clinicService = clinicService;
         this.accountService = accountService;
         this.patientService = patientService;
+        this.emailService = emailService;
 
     }
 
@@ -133,7 +140,21 @@ public class BookingService {
         booking.setTime(time);
         booking.setPatient(patient);
 
-        return bookingRepository.save(booking);
+        Booking b = bookingRepository.save(booking);
+
+        // send email
+        this.sendEmailBooking(patient.getAccount(), b, "Xác nhận đặt lịch khám thành công", templateBookingSuccess);
+
+        return b;
+    }
+
+    public void sendEmailBooking(Account a, Booking b, String subTitle, String template) {
+        this.emailService.sendEmailFromTemplateSync(
+                a.getEmail(),
+                subTitle,
+                template,
+                a.getName() == null ? null : a.getName(),
+                b);
     }
 
     public Booking updateBooking(UpdateBookingDTO dto) throws IdInvalidException, BusinessException {
@@ -202,6 +223,10 @@ public class BookingService {
         if (b != null) {
             b.setStatus(BookingStatusEnum.CANCELLED);
             this.bookingRepository.save(b);
+
+            Patient p = this.patientService.fetchPatientById(b.getPatient().getId());
+            // send email
+            this.sendEmailBooking(p.getAccount(), b, "Thông báo hủy lịch khám", templateBookingCancel);
         }
 
         return b;
