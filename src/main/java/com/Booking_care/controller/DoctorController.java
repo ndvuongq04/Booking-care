@@ -6,6 +6,7 @@ import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.dto.DoctorDTO.ResDoctorDTO;
 import com.Booking_care.domain.dto.DoctorDTO.UpdateDoctorDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
+import com.Booking_care.service.AccountProfile;
 import com.Booking_care.service.ClinicService;
 import com.Booking_care.service.DoctorService;
 import com.Booking_care.service.SpecialtyService;
@@ -30,13 +31,14 @@ public class DoctorController {
     private final DoctorService doctorService;
     private final ClinicService clinicService;
     private final SpecialtyService specialtyService;
+    private final AccountProfile accountProfile;
 
-    public DoctorController(DoctorService doctorService,
-            ClinicService clinicService,
-            SpecialtyService specialtyService) {
+    public DoctorController(DoctorService doctorService, ClinicService clinicService, SpecialtyService specialtyService,
+            AccountProfile accountProfile) {
         this.doctorService = doctorService;
         this.clinicService = clinicService;
         this.specialtyService = specialtyService;
+        this.accountProfile = accountProfile;
     }
 
     @PostMapping("doctors")
@@ -45,6 +47,8 @@ public class DoctorController {
         if (this.doctorService.fetchAccountById(doctor.getAccount().getId()) == null) {
             throw new IdInvalidException("Account với id " + doctor.getAccount().getId() + " không tồn tại");
         }
+
+        this.accountProfile.accountUsed(doctor.getAccount().getId());
 
         if (this.doctorService.isAccountExits(doctor.getAccount().getId())) {
             throw new IdInvalidException(

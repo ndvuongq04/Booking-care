@@ -17,18 +17,20 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.oauth2.jwt.Jwt;
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Otp;
+import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.dto.AccountDTO.CreateAccountDTO;
 import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
 import com.Booking_care.domain.dto.AuthDTO.PasswordDTO;
 import com.Booking_care.domain.dto.AuthDTO.ReqLoginDTO;
 import com.Booking_care.domain.dto.AuthDTO.ResLoginDTO;
 import com.Booking_care.domain.dto.AuthDTO.ResetPasswordRequest;
-import com.Booking_care.service.AccountService;
-import com.Booking_care.service.EmailService;
-import com.Booking_care.service.OtpService;
+import com.Booking_care.domain.dto.PatientDTO.ReqPatientDTO;
+import com.Booking_care.domain.dto.PatientDTO.ResPatientDTO;
+import com.Booking_care.service.*;
 import com.Booking_care.util.SecurityUtil;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import java.security.SecureRandom;
@@ -42,6 +44,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 @RestController
 @RequestMapping("/api/v1")
 public class AuthController {
+
+    private final PatientService patientService;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final AccountService accountService;
     private final SecurityUtil securityUtil;
@@ -59,13 +63,14 @@ public class AuthController {
             SecurityUtil securityUtil,
             PasswordEncoder passwordEncoder,
             EmailService emailService,
-            OtpService otpService) {
+            OtpService otpService, PatientService patientService) {
         this.accountService = accountService;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.securityUtil = securityUtil;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.otpService = otpService;
+        this.patientService = patientService;
     }
 
     @PostMapping("/auth/login")
@@ -84,10 +89,16 @@ public class AuthController {
         Account currentAcc = this.accountService.fetchAccountByEmail(loginDTO.getUserName());
 
         if (currentAcc != null) {
+
+            Long patientId = (currentAcc != null && currentAcc.getPatient() != null)
+                    ? currentAcc.getPatient().getId()
+                    : null;
+
             ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(currentAcc.getId(),
                     currentAcc.getName(),
                     currentAcc.getEmail(),
-                    currentAcc.getRole().getName().toUpperCase());
+                    currentAcc.getRole().getName().toUpperCase(),
+                    patientId);
             res.setUserLogin(userLogin);
         }
 
@@ -156,11 +167,17 @@ public class AuthController {
         ResLoginDTO res = new ResLoginDTO();
         Account currentAccountDB = this.accountService.fetchAccountByEmail(email);
         if (currentAccountDB != null) {
+
+            Long patientId = (currentAccountDB != null && currentAccountDB.getPatient() != null)
+                    ? currentAccountDB.getPatient().getId()
+                    : null;
+
             ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
                     currentAccountDB.getId(),
                     currentAccountDB.getEmail(),
                     currentAccountDB.getName(),
-                    currentAccountDB.getRole().getName().toString().toUpperCase());
+                    currentAccountDB.getRole().getName().toString().toUpperCase(),
+                    patientId);
             res.setUserLogin(userLogin);
 
         }
@@ -251,7 +268,7 @@ public class AuthController {
     }
 
     @PostMapping("/auth/create-verify-otp")
-    public ResponseEntity<ResAccountDTO> handleVerifyOtp(@RequestBody Otp otp) throws IdInvalidException {
+    public ResponseEntity<ResPatientDTO> handleVerifyOtp(@RequestBody Otp otp) throws IdInvalidException {
 
         // xác thực email
         otp.setCurrentSubmit(Instant.now());
@@ -269,8 +286,14 @@ public class AuthController {
         acc.setEmail(otp.getEmail());
         acc.setName(otp.getName());
 
+        Account a = this.accountService.handleCreateAccount(acc);
+
+        // create patient
+        ReqPatientDTO p = new ReqPatientDTO();
+        p.setAccountId(a.getId());
+
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(this.accountService.convertToResAccountDTO(this.accountService.handleCreateAccount(acc)));
+                .body(this.patientService.convertToResPatientDTO(this.patientService.handleCreatePatient(p)));
     }
 
     @GetMapping("/auth/forgot-password-send-email")

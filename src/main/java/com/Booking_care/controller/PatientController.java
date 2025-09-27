@@ -17,6 +17,7 @@ import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.dto.PatientDTO.ReqPatientDTO;
 import com.Booking_care.domain.dto.PatientDTO.ResPatientDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
+import com.Booking_care.service.AccountProfile;
 import com.Booking_care.service.AccountService;
 import com.Booking_care.service.PatientService;
 import com.Booking_care.util.SecurityUtil;
@@ -30,11 +31,13 @@ import jakarta.validation.Valid;
 public class PatientController {
     private final PatientService patientService;
     private final AccountService accountService;
+    private final AccountProfile accountProfile;
 
-    public PatientController(PatientService patientService,
-            AccountService accountService) {
+    public PatientController(PatientService patientService, AccountService accountService,
+            AccountProfile accountProfile) {
         this.patientService = patientService;
         this.accountService = accountService;
+        this.accountProfile = accountProfile;
     }
 
     @PostMapping("/patients")
@@ -47,6 +50,7 @@ public class PatientController {
             throw new IdInvalidException("Account không tồn tại");
         }
 
+        this.accountProfile.accountUsed(reqPatient.getAccountId());
         if (this.patientService.isAccountExits(acc.getId())) {
             throw new IdInvalidException("Account đã tồn tại tài khoản bệnh nhân");
         }

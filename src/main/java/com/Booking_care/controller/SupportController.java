@@ -15,6 +15,7 @@ import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Support;
 import com.Booking_care.domain.dto.SupportDTO.ResSupportDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
+import com.Booking_care.service.AccountProfile;
 import com.Booking_care.service.ClinicService;
 import com.Booking_care.service.SupportService;
 import com.Booking_care.util.annotation.ApiMessage;
@@ -27,11 +28,13 @@ import jakarta.validation.Valid;
 public class SupportController {
     private final SupportService supportService;
     private final ClinicService clinicService;
+    private final AccountProfile accountProfile;
 
-    public SupportController(SupportService supportService,
-            ClinicService clinicService) {
+    public SupportController(SupportService supportService, ClinicService clinicService,
+            AccountProfile accountProfile) {
         this.supportService = supportService;
         this.clinicService = clinicService;
+        this.accountProfile = accountProfile;
     }
 
     @GetMapping
@@ -64,6 +67,7 @@ public class SupportController {
             throw new IdInvalidException("Account với id " + support.getAccount().getId() + " không tồn tại");
         }
 
+        this.accountProfile.accountUsed(support.getAccount().getId());
         if (this.supportService.isAccountExits(acc.getId())) {
             throw new IdInvalidException(
                     "Account với id " + support.getAccount().getId() + " đã được sử dụng cho một trợ lý khác");
