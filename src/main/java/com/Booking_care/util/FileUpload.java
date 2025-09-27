@@ -35,13 +35,13 @@ public class FileUpload {
         }
 
         // Kiểm tra nôi dung file
-        try (InputStream is = file.getInputStream()) {
-            if (ImageIO.read(is) == null) { // không decode được ảnh
-                throw new StorageException("Invalid image data.");
-            }
-        } catch (IOException e) {
-            throw new StorageException("Cannot read upload file.");
-        }
+        // try (InputStream is = file.getInputStream()) {
+        // if (ImageIO.read(is) == null) { // không decode được ảnh
+        // throw new StorageException("Invalid image data.");
+        // }
+        // } catch (IOException e) {
+        // throw new StorageException("Cannot read upload file.");
+        // }
 
     }
 
