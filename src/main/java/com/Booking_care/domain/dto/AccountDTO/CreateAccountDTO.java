@@ -36,7 +36,7 @@ public class CreateAccountDTO {
     private String address;
     private GenderEnum gender;
     private String cccd;
-    private Long roleId;
+    private long roleId;
 
     private MultipartFile file;
 

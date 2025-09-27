@@ -285,6 +285,7 @@ public class AuthController {
         acc.setPassword(otp.getPassword());
         acc.setEmail(otp.getEmail());
         acc.setName(otp.getName());
+        acc.setRoleId(4); // role patient
 
         Account a = this.accountService.handleCreateAccount(acc);
 

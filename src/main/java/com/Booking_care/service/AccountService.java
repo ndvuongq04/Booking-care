@@ -64,8 +64,8 @@ public class AccountService {
         acc.setGender(dto.getGender());
         acc.setCccd(dto.getCccd());
 
-        // set role default Client (id = 4)
-        Role role = this.roleService.fetchRoleById(4);
+        // set role
+        Role role = this.roleService.fetchRoleById(dto.getRoleId());
         acc.setRole(role);
 
         return this.accountRepository.save(acc);
