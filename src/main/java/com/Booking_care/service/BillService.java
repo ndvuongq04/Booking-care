@@ -2,8 +2,6 @@ package com.Booking_care.service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,10 +14,6 @@ import com.Booking_care.domain.Support;
 import com.Booking_care.domain.dto.BillDTO.ReqBillDTO;
 import com.Booking_care.domain.dto.BillDTO.ResBillDTO;
 import com.Booking_care.domain.dto.BillDetailDTO.ResBillDetailDTO;
-import com.Booking_care.domain.dto.MedicalRecordDTO.ResMedicalRecordDTO;
-import com.Booking_care.domain.dto.MedicalRecordDTO.ResMedicalRecordDTO.PatientDTO;
-import com.Booking_care.domain.dto.MedicalRecordDTO.ResMedicalRecordDTO.SpecialtyDTO;
-import com.Booking_care.domain.dto.SupportDTO.ResSupportDTO;
 import com.Booking_care.domain.enums.BillStatusEnum;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.BillRepository;
@@ -180,6 +174,35 @@ public class BillService {
         dto.setUpdateAt(bill.getUpdateAt());
 
         return dto;
+    }
+
+    public ResultPaginationDTO getBillByPatientId(Long id, Pageable pageable) throws IdInvalidException {
+        Patient p = this.patientService.fetchPatientById(id);
+        if (p == null) {
+            throw new IdInvalidException("Patient với id : " + id + " không tồn tại");
+        }
+
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<Bill> page = this.billRepository.findByPatientId(id, pageable);
+
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        List<ResBillDTO> listBill = page.getContent().stream()
+                .map(bill -> {
+                    List<BillDetail> billDetails = this.billDetailService.fetchBillDetailByBillId(bill.getId());
+                    return this.toResBillDTO(bill, billDetails);
+                })
+                .toList();
+
+        res.setMeta(meta);
+        res.setResult(listBill);
+
+        return res;
     }
 
 }

@@ -24,11 +24,11 @@ public class ResBillDTO {
     private Long id;
 
     // Quan hệ
-    private PatientDTO patient; // id + name thôi cho gọn
+    private PatientDTO patient;
     private MedicalRecordDTO medicalRecord;
     private SupportDTO support;
 
-    private List<ResBillDetailDTO> services; // danh sách dịch vụ
+    private List<ResBillDetailDTO> services;
 
     // Thông tin hóa đơn
     private BigDecimal totalBill;
@@ -37,7 +37,6 @@ public class ResBillDTO {
     private Instant createAt;
     private Instant updateAt;
 
-    // Nested DTOs gọn nhẹ
     @Getter
     @Setter
     @AllArgsConstructor
