@@ -6,5 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.Booking_care.domain.Bill;
 
 public interface BillRepository extends JpaRepository<Bill, Long> {
-    Page<Bill> findByPatientId(long id, Pageable pageable);
+    Page<Bill> findByPatientId(long patientId, Pageable pageable);
+
+    Page<Bill> findBySupport_Clinic_Id(long clinicId, Pageable pageable);
+
 }

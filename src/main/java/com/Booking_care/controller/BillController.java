@@ -53,4 +53,11 @@ public class BillController {
         return ResponseEntity.ok(this.billService.getBillByPatientId(id, pageable));
     }
 
+    @GetMapping("/bill/clinic/{id}")
+    @ApiMessage("Fetch Bill by clinic id")
+    public ResponseEntity<ResultPaginationDTO> getBillByClinicId(@PathVariable("id") long id, Pageable pageable)
+            throws IdInvalidException {
+        return ResponseEntity.ok(this.billService.getBillByClinicId(id, pageable));
+    }
+
 }

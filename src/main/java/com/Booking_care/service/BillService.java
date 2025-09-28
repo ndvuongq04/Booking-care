@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.Booking_care.domain.Bill;
 import com.Booking_care.domain.BillDetail;
+import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.MedicalRecord;
 import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.Support;
@@ -27,19 +28,22 @@ public class BillService {
     private final PatientService patientService;
     private final MedicalRecordsService medicalRecordsService;
     private final SupportService supportService;
+    private final ClinicService clinicService;
 
     public BillService(BillRepository billRepository,
             ServicesService servicesService,
             BillDetailService billDetailService,
             PatientService patientService,
             MedicalRecordsService medicalRecordsService,
-            SupportService supportService) {
+            SupportService supportService,
+            ClinicService clinicService) {
         this.billRepository = billRepository;
         this.servicesService = servicesService;
         this.billDetailService = billDetailService;
         this.patientService = patientService;
         this.medicalRecordsService = medicalRecordsService;
         this.supportService = supportService;
+        this.clinicService = clinicService;
     }
 
     @Transactional
@@ -185,6 +189,35 @@ public class BillService {
         ResultPaginationDTO res = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
         Page<Bill> page = this.billRepository.findByPatientId(id, pageable);
+
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        List<ResBillDTO> listBill = page.getContent().stream()
+                .map(bill -> {
+                    List<BillDetail> billDetails = this.billDetailService.fetchBillDetailByBillId(bill.getId());
+                    return this.toResBillDTO(bill, billDetails);
+                })
+                .toList();
+
+        res.setMeta(meta);
+        res.setResult(listBill);
+
+        return res;
+    }
+
+    public ResultPaginationDTO getBillByClinicId(Long id, Pageable pageable) throws IdInvalidException {
+        Clinic p = this.clinicService.fetchClinicById(id);
+        if (p == null) {
+            throw new IdInvalidException("Clinic với id : " + id + " không tồn tại");
+        }
+
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<Bill> page = this.billRepository.findBySupport_Clinic_Id(id, pageable);
 
         meta.setPage(pageable.getPageNumber() + 1);
         meta.setPageSize(pageable.getPageSize());
