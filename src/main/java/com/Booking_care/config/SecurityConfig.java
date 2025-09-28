@@ -50,6 +50,7 @@ public class SecurityConfig {
                 "/api/v1/doctors", "/api/v1/doctors/**",
                 "/api/v1/clinics", "/api/v1/clinics/**",
                 "/api/v1/specialties", "/api/v1/specialties/**",
+                "/api/v1/bookings/doctor/*/available-times"
         };
         http
                 .csrf(c -> c.disable())
