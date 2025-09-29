@@ -1,23 +1,31 @@
 package com.Booking_care.service;
 
+import java.time.Instant;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import com.Booking_care.controller.*;
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Specialty;
+import com.Booking_care.domain.dto.DoctorDTO.DoctorCriteriaDTO;
 import com.Booking_care.domain.dto.DoctorDTO.ResDoctorDTO;
 import com.Booking_care.domain.dto.DoctorDTO.UpdateDoctorDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.DoctorRepository;
+import com.Booking_care.service.specification.DoctorSpecs;
 
 @Service
 public class DoctorService {
+
     private final DoctorRepository doctorRepository;
     private final AccountService accountService;
     private final ClinicService clinicService;
@@ -135,6 +143,83 @@ public class DoctorService {
     public boolean existsByAccountAndIdNot(Account a, long id) {
         Account account = this.fetchAccountById(a.getId());
         return this.doctorRepository.existsByAccountAndIdNot(account, id);
+    }
+
+    public Page<Doctor> getAllWithSpec(DoctorCriteriaDTO doctorCriteriaDTO, Pageable pageable) {
+        Specification<Doctor> combinedSpec = Specification.where(null);
+
+        if (doctorCriteriaDTO.getDegree() != null && !doctorCriteriaDTO.getDegree().trim().isEmpty()) {
+            Specification<Doctor> currentSpec = DoctorSpecs.degreeEqual(doctorCriteriaDTO.getDegree());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (doctorCriteriaDTO.getMonthYear() != null) {
+            YearMonth monthYear = doctorCriteriaDTO.getMonthYear();
+
+            Instant from = monthYear.atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng
+                    .toInstant();
+
+            Instant to = monthYear.plusMonths(1).atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng kế tiếp
+                    .toInstant();
+
+            Specification<Doctor> currentSpec = DoctorSpecs.dateBetween(from, to);
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (doctorCriteriaDTO.getClinicId() != null) {
+            Specification<Doctor> currentSpec = DoctorSpecs.clinicJointEqual(doctorCriteriaDTO.getClinicId());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (doctorCriteriaDTO.getSpecialtyId() != null) {
+            Specification<Doctor> currentSpec = DoctorSpecs.specialtyJointEqual(doctorCriteriaDTO.getSpecialtyId());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (doctorCriteriaDTO.getName() != null && !doctorCriteriaDTO.getName().trim().isEmpty()) {
+            Specification<Doctor> currentSpec = DoctorSpecs.nameJoinLikeIgnoreCase(doctorCriteriaDTO.getName());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (doctorCriteriaDTO.getCost() != null) {
+            Specification<Doctor> currentSpec = DoctorSpecs.costBetween(doctorCriteriaDTO.getCost().getMin(),
+                    doctorCriteriaDTO.getCost().getMax());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (doctorCriteriaDTO.getPhoneNumber() != null && !doctorCriteriaDTO.getPhoneNumber().trim().isEmpty()) {
+            Specification<Doctor> currentSpec = DoctorSpecs.phoneNumberJointLike(doctorCriteriaDTO.getPhoneNumber());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        return this.doctorRepository.findAll(combinedSpec, pageable);
+
+    }
+
+    public ResultPaginationDTO getDoctorSearch(DoctorCriteriaDTO doctorCriteriaDTO, Pageable pageable) {
+        Page<Doctor> listPage = this.getAllWithSpec(doctorCriteriaDTO, pageable);
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(listPage.getTotalPages());
+        meta.setTotals(listPage.getTotalElements());
+
+        // convert
+        List<ResDoctorDTO> listDoc = listPage.getContent().stream()
+                .map(item -> this.convertToDoctorDTO(item))
+                .collect(Collectors.toList());
+
+        res.setResult(listDoc);
+        res.setMeta(meta);
+
+        return res;
     }
 
 }

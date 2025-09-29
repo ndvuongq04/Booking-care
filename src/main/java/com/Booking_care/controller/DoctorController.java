@@ -3,6 +3,7 @@ package com.Booking_care.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.Doctor;
+import com.Booking_care.domain.dto.DoctorDTO.DoctorCriteriaDTO;
 import com.Booking_care.domain.dto.DoctorDTO.ResDoctorDTO;
 import com.Booking_care.domain.dto.DoctorDTO.UpdateDoctorDTO;
 import com.Booking_care.domain.enums.RoleName;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
@@ -127,5 +129,15 @@ public class DoctorController {
             Pageable pageable) {
         ResultPaginationDTO result = this.doctorService.fetchAllDoctor(pageable);
         return ResponseEntity.ok().body(result);
+    }
+
+    @GetMapping("doctors/search")
+    public ResponseEntity<ResultPaginationDTO> searchAndFilter(
+            @Valid @ModelAttribute DoctorCriteriaDTO doctorCriteriaDTO,
+            Pageable pageable) {
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(this.doctorService.getDoctorSearch(doctorCriteriaDTO, pageable));
+
     }
 }
