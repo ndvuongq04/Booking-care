@@ -46,6 +46,7 @@ public class SecurityConfig {
                 "/",
                 "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/register",
                 "/api/v1/auth/forgot-password-send-email", "/api/v1/auth/forgot-verify-otp",
+                "/api/v1/auth/create-verify-otp",
                 "/api/v1/auth/forgot-password",
                 "/api/v1/doctors", "/api/v1/doctors/**",
                 "/api/v1/clinics", "/api/v1/clinics/**",

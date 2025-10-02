@@ -163,4 +163,28 @@ public class MedicalRecordsService {
         return medicalRecordsRepository.save(existing);
     }
 
+    public ResultPaginationDTO fetchAllMedicalRecordsByDoctor(Pageable pageable, long doctorId) {
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<MedicalRecord> page = this.medicalRecordsRepository.findByDoctorId(pageable, doctorId);
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        // convert
+        List<ResMedicalRecordDTO> listAcc = page.getContent().stream()
+                .map(item -> this.convertToMedicalRecordDTO(item))
+                .collect(Collectors.toList());
+
+        res.setResult(listAcc);
+        res.setMeta(meta);
+
+        return res;
+    }
+
 }

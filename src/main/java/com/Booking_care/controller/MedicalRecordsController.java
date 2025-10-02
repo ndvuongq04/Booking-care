@@ -122,4 +122,12 @@ public class MedicalRecordsController {
         return ResponseEntity.ok(this.medicalRecordsService.convertToMedicalRecordDTO(updated));
     }
 
+    @GetMapping("/medicalRecord/doctor/{id}")
+    @ApiMessage("Fetch all medicalRecord by doctor")
+    public ResponseEntity<ResultPaginationDTO> getAllMedicalRecordByDoctor(
+            Pageable pageable, @PathVariable("id") long doctorId) {
+        ResultPaginationDTO result = this.medicalRecordsService.fetchAllMedicalRecordsByDoctor(pageable, doctorId);
+        return ResponseEntity.ok().body(result);
+    }
+
 }
