@@ -1,9 +1,13 @@
 package com.Booking_care.service;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.Booking_care.domain.Bill;
@@ -12,12 +16,15 @@ import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.MedicalRecord;
 import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.Support;
+import com.Booking_care.domain.dto.BillDTO.BillCriteriaDTO;
 import com.Booking_care.domain.dto.BillDTO.ReqBillDTO;
 import com.Booking_care.domain.dto.BillDTO.ResBillDTO;
 import com.Booking_care.domain.dto.BillDetailDTO.ResBillDetailDTO;
 import com.Booking_care.domain.enums.BillStatusEnum;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.BillRepository;
+import com.Booking_care.service.specification.BillSpecs;
+import com.Booking_care.service.specification.DoctorSpecs;
 import com.Booking_care.util.error.IdInvalidException;
 
 @Service
@@ -234,6 +241,71 @@ public class BillService {
 
         res.setMeta(meta);
         res.setResult(listBill);
+
+        return res;
+    }
+
+    public Page<Bill> getAllBillSearch(Pageable pageable, BillCriteriaDTO billCriteriaDTO) {
+        Specification<Bill> combinedSpec = Specification.where(null);
+
+        if (billCriteriaDTO.getBillId() != null) {
+            Specification<Bill> currentSpec = BillSpecs.billIdEqual(billCriteriaDTO.getBillId());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (billCriteriaDTO.getMonthYear() != null) {
+            YearMonth monthYear = billCriteriaDTO.getMonthYear();
+
+            Instant from = monthYear.atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng
+                    .toInstant();
+
+            Instant to = monthYear.plusMonths(1).atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng kế tiếp
+                    .toInstant();
+
+            Specification<Bill> currentSpec = BillSpecs.dateBetween(from, to);
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (billCriteriaDTO.getAccountName() != null && !billCriteriaDTO.getAccountName().trim().isEmpty()) {
+            Specification<Bill> currentSpec = BillSpecs
+                    .patientAccountNameLikeIgnoreCase(billCriteriaDTO.getAccountName());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (billCriteriaDTO.getServiceId() != null) {
+            Specification<Bill> currentSpec = BillSpecs.serviceIdJoinEqual(billCriteriaDTO.getServiceId());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        return this.billRepository.findAll(combinedSpec, pageable);
+    }
+
+    public ResultPaginationDTO handleGetAllBillSearch(Pageable pageable, BillCriteriaDTO billCriteriaDTO) {
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<Bill> page = this.getAllBillSearch(pageable, billCriteriaDTO);
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        // convert
+        // service
+        List<ResBillDTO> listBill = page.getContent().stream()
+                .map(bill -> {
+                    List<BillDetail> billDetails = this.billDetailService.fetchBillDetailByBillId(bill.getId());
+                    return this.toResBillDTO(bill, billDetails);
+                })
+                .toList();
+
+        res.setResult(listBill);
+        res.setMeta(meta);
 
         return res;
     }

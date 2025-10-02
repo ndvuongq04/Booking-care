@@ -3,6 +3,7 @@ package com.Booking_care.util;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import jakarta.persistence.metamodel.ListAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
 
 @Service
@@ -74,6 +75,15 @@ public class SpecUtil {
                     cb.lower(root.join(joinAttr1).join(joinAttr2).get(field)),
                     "%" + value.toLowerCase() + "%");
         };
+    }
+
+    public static <T, J, K, Y> Specification<T> joinEqual(
+            ListAttribute<? super T, J> joinAttr1, // onToMany
+            SingularAttribute<? super J, K> joinAttr2,
+            SingularAttribute<? super K, Y> field,
+            Y value) {
+        return (root, query, cb) -> value == null ? null
+                : cb.equal(root.join(joinAttr1).join(joinAttr2).get(field), value);
     }
 
 }

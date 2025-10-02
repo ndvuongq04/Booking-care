@@ -2,6 +2,8 @@ package com.Booking_care.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.Booking_care.domain.dto.BillDTO.BillCriteriaDTO;
 import com.Booking_care.domain.dto.BillDTO.ReqBillDTO;
 import com.Booking_care.domain.dto.BillDTO.ResBillDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
@@ -58,6 +60,12 @@ public class BillController {
     public ResponseEntity<ResultPaginationDTO> getBillByClinicId(@PathVariable("id") long id, Pageable pageable)
             throws IdInvalidException {
         return ResponseEntity.ok(this.billService.getBillByClinicId(id, pageable));
+    }
+
+    @GetMapping("/bill/search")
+    @ApiMessage("Fetch all Bill search/filter")
+    public ResponseEntity<ResultPaginationDTO> getAllBillSearch(Pageable pageable, BillCriteriaDTO billCriteriaDTO) {
+        return ResponseEntity.ok(this.billService.handleGetAllBillSearch(pageable, billCriteriaDTO));
     }
 
 }
