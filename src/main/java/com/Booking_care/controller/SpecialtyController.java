@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.Booking_care.domain.Specialty;
 import com.Booking_care.domain.dto.SpecialtyDTO.ReqSpecialtyDTO;
+import com.Booking_care.domain.dto.SpecialtyDTO.SpecialtyCriteriaDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.SpecialtyService;
+import com.Booking_care.service.specification.SpecialtySpecs;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
 import com.Booking_care.util.error.StorageException;
@@ -102,6 +104,15 @@ public class SpecialtyController {
     @ApiMessage("Fetch all specialties")
     public ResponseEntity<ResultPaginationDTO> getAllSpecialties(Pageable pageable) {
         ResultPaginationDTO result = this.specialtyService.fetchAllSpecialty(pageable);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/specialties/search")
+    @ApiMessage("Fetch all specialties search/filter")
+    public ResponseEntity<ResultPaginationDTO> getAllSpecialtiesSearch(Pageable pageable,
+            SpecialtyCriteriaDTO specialtyCriteriaDTO) {
+        ResultPaginationDTO result = this.specialtyService.fetchAllSpecialtySearch(pageable, specialtyCriteriaDTO);
 
         return ResponseEntity.ok(result);
     }
