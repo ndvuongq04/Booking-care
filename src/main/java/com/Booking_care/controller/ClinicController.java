@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import com.Booking_care.domain.Clinic;
+import com.Booking_care.domain.dto.ClinicDTO.ClinicCriteriaDTO;
 import com.Booking_care.domain.dto.ClinicDTO.ReqClinicDTO;
 import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
@@ -117,6 +118,14 @@ public class ClinicController {
     public ResponseEntity<ResultPaginationDTO> getAllClinic(
             Pageable pageable) {
         ResultPaginationDTO result = this.clinicService.fetchAllClinic(pageable);
+        return ResponseEntity.ok().body(result);
+    }
+
+    @GetMapping("/clinics/search")
+    @ApiMessage("Fetch all clinic search/filter")
+    public ResponseEntity<ResultPaginationDTO> getAllClinicSearch(
+            Pageable pageable, ClinicCriteriaDTO clinicCriteriaDTO) {
+        ResultPaginationDTO result = this.clinicService.fetchAllClinicSearch(pageable, clinicCriteriaDTO);
         return ResponseEntity.ok().body(result);
     }
 }

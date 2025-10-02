@@ -1,19 +1,26 @@
 package com.Booking_care.service;
 
+import java.time.Instant;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.Booking_care.domain.Address;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.dto.ResCloudinaryDTO;
+import com.Booking_care.domain.dto.ClinicDTO.ClinicCriteriaDTO;
 import com.Booking_care.domain.dto.ClinicDTO.ReqClinicDTO;
 import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.ClinicRepository;
+import com.Booking_care.service.specification.ClinicSpecs;
+import com.Booking_care.service.specification.DoctorSpecs;
 import com.Booking_care.util.error.StorageException;
 
 @Service
@@ -152,6 +159,67 @@ public class ClinicService {
         }
 
         return dto;
+    }
+
+    public Page<Clinic> getAllClinicWithSpecs(Pageable pageable, ClinicCriteriaDTO clinicCriteriaDTO) {
+        Specification<Clinic> combinedSpec = Specification.where(null);
+
+        if (clinicCriteriaDTO.getName() != null && !clinicCriteriaDTO.getName().trim().isEmpty()) {
+            Specification<Clinic> currentSpec = ClinicSpecs.nameLikeIgnoreCase(clinicCriteriaDTO.getName());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (clinicCriteriaDTO.getAddressId() != null) {
+            Specification<Clinic> currentSpec = ClinicSpecs.addressJointEqual(clinicCriteriaDTO.getAddressId());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (clinicCriteriaDTO.getPhoneNumber() != null && !clinicCriteriaDTO.getPhoneNumber().trim().isEmpty()) {
+            Specification<Clinic> currentSpec = ClinicSpecs
+                    .phoneNumberLikeIgnoreCase(clinicCriteriaDTO.getPhoneNumber());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (clinicCriteriaDTO.getMonthYear() != null) {
+            YearMonth monthYear = clinicCriteriaDTO.getMonthYear();
+
+            Instant from = monthYear.atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng
+                    .toInstant();
+
+            Instant to = monthYear.plusMonths(1).atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng kế tiếp
+                    .toInstant();
+
+            Specification<Clinic> currentSpec = ClinicSpecs.dateBetween(from, to);
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        return this.clinicRepository.findAll(combinedSpec, pageable);
+    }
+
+    public ResultPaginationDTO fetchAllClinicSearch(Pageable pageable, ClinicCriteriaDTO clinicCriteriaDTO) {
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<Clinic> page = this.getAllClinicWithSpecs(pageable, clinicCriteriaDTO);
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        // convert
+        List<ResClinicDTO> listClinic = page.getContent().stream()
+                .map(item -> this.convertToClinicDTO(item))
+                .collect(Collectors.toList());
+
+        res.setResult(listClinic);
+        res.setMeta(meta);
+
+        return res;
     }
 
 }
