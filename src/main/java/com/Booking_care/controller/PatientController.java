@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Patient;
+import com.Booking_care.domain.dto.PatientDTO.PatientCriteriaDTO;
 import com.Booking_care.domain.dto.PatientDTO.ReqPatientDTO;
 import com.Booking_care.domain.dto.PatientDTO.ResPatientDTO;
 import com.Booking_care.domain.enums.RoleName;
@@ -21,7 +22,6 @@ import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.AccountProfile;
 import com.Booking_care.service.AccountService;
 import com.Booking_care.service.PatientService;
-import com.Booking_care.util.SecurityUtil;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
 
@@ -112,6 +112,14 @@ public class PatientController {
         this.patientService.handleDeletePatient(patient.getId());
 
         return ResponseEntity.ok(null);
+    }
+
+    @GetMapping("/patients/search")
+    @ApiMessage("Fetch all patient search/fiter")
+    public ResponseEntity<ResultPaginationDTO> getAllPatientsSearch(
+            Pageable pageable, PatientCriteriaDTO patientCriteriaDTO) {
+        ResultPaginationDTO result = this.patientService.fetchAllPatientsSearch(pageable, patientCriteriaDTO);
+        return ResponseEntity.ok().body(result);
     }
 
 }
