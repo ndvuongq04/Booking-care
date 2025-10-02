@@ -61,4 +61,19 @@ public class SpecUtil {
         };
     }
 
+    public static <T, J, K> Specification<T> joinLikeIgnoreCase(
+            SingularAttribute<? super T, J> joinAttr1,
+            SingularAttribute<? super J, K> joinAttr2,
+            SingularAttribute<? super K, String> field,
+            String value) {
+        return (root, query, cb) -> {
+            if (value == null || value.trim().isEmpty()) {
+                return null;
+            }
+            return cb.like(
+                    cb.lower(root.join(joinAttr1).join(joinAttr2).get(field)),
+                    "%" + value.toLowerCase() + "%");
+        };
+    }
+
 }

@@ -7,8 +7,6 @@ import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.Booking;
 import com.Booking_care.service.BookingService;
-import com.Booking_care.service.EmailService;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Pageable;
 import com.Booking_care.util.annotation.ApiMessage;
@@ -26,6 +24,8 @@ import com.Booking_care.domain.dto.BookingDTO.ResBookingDTO;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.Booking_care.domain.dto.BookingDTO.BookingCriteriaDTO;
 import com.Booking_care.domain.dto.BookingDTO.CreateBookingDTO;
 import com.Booking_care.domain.dto.BookingDTO.UpdateBookingDTO;
 
@@ -154,5 +154,14 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getAvailableTimes(doctorId, appointmentDate));
     }
 
+    // Get all bookings
+    @GetMapping("/bookings/search")
+    @ApiMessage("Fetch all booking")
+    public ResponseEntity<ResultPaginationDTO> getAllBookingSearch(Pageable pageable,
+            BookingCriteriaDTO bookingCriteriaDTO) {
+        return ResponseEntity.ok(bookingService.fetchAllBookingSearch(pageable, bookingCriteriaDTO));
+    }
+
     // get booing by doctor and appointmentDate => sẽ dùng specification
+
 }

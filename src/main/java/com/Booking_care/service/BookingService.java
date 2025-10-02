@@ -3,6 +3,8 @@ package com.Booking_care.service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -10,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.Booking_care.domain.Account;
@@ -18,12 +21,15 @@ import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.Time;
+import com.Booking_care.domain.dto.BookingDTO.BookingCriteriaDTO;
 import com.Booking_care.domain.dto.BookingDTO.CreateBookingDTO;
 import com.Booking_care.domain.dto.BookingDTO.ResBookingDTO;
 import com.Booking_care.domain.dto.BookingDTO.UpdateBookingDTO;
 import com.Booking_care.domain.enums.BookingStatusEnum;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.BookingRepository;
+import com.Booking_care.service.specification.BookingSpecs;
+import com.Booking_care.service.specification.ClinicSpecs;
 import com.Booking_care.util.error.BusinessException;
 import com.Booking_care.util.error.IdInvalidException;
 
@@ -348,6 +354,63 @@ public class BookingService {
                 .filter(t -> !bookedTimeIds.contains(t.getId()))
                 .map(t -> new ResBookingDTO.ResTimeDTO(t.getId(), t.getStart(), t.getEnd()))
                 .toList();
+    }
+
+    Page<Booking> getBookingWithSpecs(Pageable pageable, BookingCriteriaDTO bookingCriteriaDTO) {
+        Specification<Booking> combinedSpec = Specification.where(null);
+
+        if (bookingCriteriaDTO.getAccountName() != null && !bookingCriteriaDTO.getAccountName().trim().isEmpty()) {
+            Specification<Booking> currentSpec = BookingSpecs
+                    .patientAccountNameLikeIgnoreCase(bookingCriteriaDTO.getAccountName());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (bookingCriteriaDTO.getPhoneNumber() != null && !bookingCriteriaDTO.getPhoneNumber().trim().isEmpty()) {
+            Specification<Booking> currentSpec = BookingSpecs
+                    .patientAccountPhoneNumberLikeIgnoreCase(bookingCriteriaDTO.getPhoneNumber());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (bookingCriteriaDTO.getMonthYear() != null) {
+            YearMonth monthYear = bookingCriteriaDTO.getMonthYear();
+
+            Instant from = monthYear.atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng
+                    .toInstant();
+
+            Instant to = monthYear.plusMonths(1).atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng kế tiếp
+                    .toInstant();
+
+            Specification<Booking> currentSpec = BookingSpecs.dateBetween(from, to);
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        return this.bookingRepository.findAll(combinedSpec, pageable);
+    }
+
+    public ResultPaginationDTO fetchAllBookingSearch(Pageable pageable, BookingCriteriaDTO bookingCriteriaDTO) {
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<Booking> page = this.getBookingWithSpecs(pageable, bookingCriteriaDTO);
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        // convert
+        List<ResBookingDTO> listBooking = page.getContent().stream()
+                .map(item -> this.convertToBookingDTO(item))
+                .collect(Collectors.toList());
+
+        res.setResult(listBooking);
+        res.setMeta(meta);
+
+        return res;
     }
 
 }
