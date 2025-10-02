@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Support;
 import com.Booking_care.domain.dto.SupportDTO.ResSupportDTO;
+import com.Booking_care.domain.dto.SupportDTO.SupportCriteriaDTO;
 import com.Booking_care.domain.enums.RoleName;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.AccountProfile;
@@ -114,5 +115,13 @@ public class SupportController {
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(null);
+    }
+
+    @GetMapping("/search")
+    @ApiMessage("Fetch all supports search/filter")
+    public ResponseEntity<ResultPaginationDTO> getAllSupportSearch(
+            Pageable pageable, SupportCriteriaDTO supportCriteriaDTO) {
+        ResultPaginationDTO result = this.supportService.fetchAllSupportSearch(pageable, supportCriteriaDTO);
+        return ResponseEntity.ok().body(result);
     }
 }

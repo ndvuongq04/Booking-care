@@ -1,17 +1,25 @@
 package com.Booking_care.service;
 
+import java.time.Instant;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Support;
+import com.Booking_care.domain.dto.DoctorDTO.DoctorCriteriaDTO;
 import com.Booking_care.domain.dto.SupportDTO.ResSupportDTO;
+import com.Booking_care.domain.dto.SupportDTO.SupportCriteriaDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.SupportRepository;
+import com.Booking_care.service.specification.DoctorSpecs;
+import com.Booking_care.service.specification.SupportSpecs;
 
 @Service
 public class SupportService {
@@ -80,6 +88,61 @@ public class SupportService {
         ResultPaginationDTO res = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
         Page<Support> page = this.supportRepository.findAll(pageable);
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        // convert
+        List<ResSupportDTO> listDoc = page.getContent().stream()
+                .map(item -> this.convertToResSupportDTO(item))
+                .collect(Collectors.toList());
+
+        res.setResult(listDoc);
+        res.setMeta(meta);
+
+        return res;
+    }
+
+    public Page<Support> getAllSupportWithSpec(SupportCriteriaDTO supportCriteriaDTO, Pageable pageable) {
+        Specification<Support> combinedSpec = Specification.where(null);
+
+        if (supportCriteriaDTO.getAddress() != null && !supportCriteriaDTO.getAddress().trim().isEmpty()) {
+            Specification<Support> currentSpec = SupportSpecs
+                    .addressJoinLikeIgnoreCase(supportCriteriaDTO.getAddress());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (supportCriteriaDTO.getClinicId() != null) {
+            Specification<Support> currentSpec = SupportSpecs
+                    .clinicJointEqual(supportCriteriaDTO.getClinicId());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (supportCriteriaDTO.getName() != null && !supportCriteriaDTO.getName().trim().isEmpty()) {
+            Specification<Support> currentSpec = SupportSpecs
+                    .nameJoinLikeIgnoreCase(supportCriteriaDTO.getName());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (supportCriteriaDTO.getPhoneNumber() != null && !supportCriteriaDTO.getPhoneNumber().trim().isEmpty()) {
+            Specification<Support> currentSpec = SupportSpecs
+                    .phoneNumberJoinLikeIgnoreCase(supportCriteriaDTO.getPhoneNumber());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        return this.supportRepository.findAll(combinedSpec, pageable);
+
+    }
+
+    public ResultPaginationDTO fetchAllSupportSearch(Pageable pageable, SupportCriteriaDTO supportCriteriaDTO) {
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<Support> page = this.getAllSupportWithSpec(supportCriteriaDTO, pageable);
 
         // từ fe
         meta.setPage(pageable.getPageNumber() + 1);
