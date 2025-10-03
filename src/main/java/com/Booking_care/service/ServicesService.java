@@ -6,11 +6,14 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.Booking_care.repository.ServiceRepository;
+import com.Booking_care.service.specification.ServicesSpecs;
 import com.Booking_care.domain.Services;
 import com.Booking_care.domain.dto.ServicesDTO.ResServicesDTO;
+import com.Booking_care.domain.dto.ServicesDTO.ServicesCriteriaDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 
 @Service
@@ -94,6 +97,46 @@ public class ServicesService {
 
     public boolean isNameExits(String name) {
         return this.serviceRepository.existsByName(name);
+    }
+
+    public Page<Services> getAllWithSpecs(Pageable pageable, ServicesCriteriaDTO servicesCriteriaDTO) {
+        Specification<Services> combinedSpec = Specification.where(null);
+
+        if (servicesCriteriaDTO.getName() != null && !servicesCriteriaDTO.getName().trim().isEmpty()) {
+            Specification<Services> currentSpec = ServicesSpecs.nameLikeIgnoreCase(servicesCriteriaDTO.getName());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        if (servicesCriteriaDTO.getCost() != null) {
+            Specification<Services> currentSpec = ServicesSpecs.costBetween(servicesCriteriaDTO.getCost().getMin(),
+                    servicesCriteriaDTO.getCost().getMax());
+            combinedSpec = combinedSpec.and(currentSpec);
+        }
+
+        return this.serviceRepository.findAll(combinedSpec, pageable);
+    }
+
+    public ResultPaginationDTO fetchAllServicesSearch(Pageable pageable, ServicesCriteriaDTO servicesCriteriaDTO) {
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<Services> page = this.getAllWithSpecs(pageable, servicesCriteriaDTO);
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        List<ResServicesDTO> listServices = page.getContent().stream()
+                .map(item -> this.handleConvertToResServicesDTO(item))
+                .collect(Collectors.toList());
+
+        res.setResult(listServices);
+        res.setMeta(meta);
+
+        return res;
     }
 
 }

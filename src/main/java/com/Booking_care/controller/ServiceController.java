@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.Services;
 import com.Booking_care.domain.dto.ServicesDTO.ResServicesDTO;
+import com.Booking_care.domain.dto.ServicesDTO.ServicesCriteriaDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.ServicesService;
 import com.Booking_care.util.annotation.ApiMessage;
@@ -89,6 +90,14 @@ public class ServiceController {
     public ResponseEntity<ResultPaginationDTO> getAllServices(
             Pageable pageable) {
         ResultPaginationDTO result = this.servicesService.fetchAllServices(pageable);
+        return ResponseEntity.ok().body(result);
+    }
+
+    @GetMapping("/services/search")
+    @ApiMessage("Fetch all services search/filter")
+    public ResponseEntity<ResultPaginationDTO> getAllServicesSearch(
+            Pageable pageable, ServicesCriteriaDTO servicesCriteriaDTO) {
+        ResultPaginationDTO result = this.servicesService.fetchAllServicesSearch(pageable, servicesCriteriaDTO);
         return ResponseEntity.ok().body(result);
     }
 
