@@ -16,6 +16,7 @@ import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.MedicalRecord;
 import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.Support;
+import com.Booking_care.domain.dto.BillDTO.BillClinicCriteriaDTO;
 import com.Booking_care.domain.dto.BillDTO.BillCriteriaDTO;
 import com.Booking_care.domain.dto.BillDTO.ReqBillDTO;
 import com.Booking_care.domain.dto.BillDTO.ResBillDTO;
@@ -286,6 +287,61 @@ public class BillService {
         ResultPaginationDTO res = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
         Page<Bill> page = this.getAllBillSearch(pageable, billCriteriaDTO);
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        // convert
+        // service
+        List<ResBillDTO> listBill = page.getContent().stream()
+                .map(bill -> {
+                    List<BillDetail> billDetails = this.billDetailService.fetchBillDetailByBillId(bill.getId());
+                    return this.toResBillDTO(bill, billDetails);
+                })
+                .toList();
+
+        res.setResult(listBill);
+        res.setMeta(meta);
+
+        return res;
+    }
+
+    public Page<Bill> getAllBillByClinicIdSearch(Pageable pageable, BillClinicCriteriaDTO billClinicCriteriaDTO) {
+        if (billClinicCriteriaDTO.getClinicId() == null) {
+            return Page.empty(pageable);
+        }
+
+        Specification<Bill> combinedSpec = Specification.where(
+                BillSpecs.clinicIdJoinEqual(billClinicCriteriaDTO.getClinicId()));
+
+        if (billClinicCriteriaDTO.getPhoneNumber() != null
+                && !billClinicCriteriaDTO.getPhoneNumber().trim().isEmpty()) {
+            combinedSpec = combinedSpec.and(
+                    BillSpecs.patientAccountPhoneLike(billClinicCriteriaDTO.getPhoneNumber().trim()));
+        }
+
+        if (billClinicCriteriaDTO.getEmail() != null && !billClinicCriteriaDTO.getEmail().trim().isEmpty()) {
+            combinedSpec = combinedSpec.and(
+                    BillSpecs.patientAccountEmailLike(billClinicCriteriaDTO.getEmail().trim()));
+        }
+
+        if (billClinicCriteriaDTO.getCccd() != null && !billClinicCriteriaDTO.getCccd().trim().isEmpty()) {
+            combinedSpec = combinedSpec.and(
+                    BillSpecs.patientAccountCccdLike(billClinicCriteriaDTO.getCccd().trim()));
+        }
+
+        return this.billRepository.findAll(combinedSpec, pageable);
+    }
+
+    public ResultPaginationDTO getBillByClinicIdSearch(BillClinicCriteriaDTO billClinicCriteriaDTO, Pageable pageable) {
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<Bill> page = this.getAllBillByClinicIdSearch(pageable, billClinicCriteriaDTO);
 
         // từ fe
         meta.setPage(pageable.getPageNumber() + 1);

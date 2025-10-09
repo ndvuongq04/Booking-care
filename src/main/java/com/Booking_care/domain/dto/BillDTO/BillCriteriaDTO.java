@@ -13,7 +13,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class BillCriteriaDTO {
     private Long serviceId;
-
     @DateTimeFormat(pattern = "MM/yyyy")
     private YearMonth monthYear;
 

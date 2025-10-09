@@ -86,4 +86,18 @@ public class SpecUtil {
                 : cb.equal(root.join(joinAttr1).join(joinAttr2).get(field), value);
     }
 
+    public static <T, J, K, Y> Specification<T> joinEqual(
+            SingularAttribute<? super T, J> joinAttr1, // many-to-one / one-to-one
+            SingularAttribute<? super J, K> joinAttr2, // many-to-one / one-to-one
+            SingularAttribute<? super K, Y> field,
+            Y value) {
+        return (root, query, cb) -> {
+            if (value == null)
+                return null;
+            return cb.equal(
+                    root.join(joinAttr1).join(joinAttr2).get(field),
+                    value);
+        };
+    }
+
 }

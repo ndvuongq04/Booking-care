@@ -3,6 +3,7 @@ package com.Booking_care.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.Booking_care.domain.dto.BillDTO.BillClinicCriteriaDTO;
 import com.Booking_care.domain.dto.BillDTO.BillCriteriaDTO;
 import com.Booking_care.domain.dto.BillDTO.ReqBillDTO;
 import com.Booking_care.domain.dto.BillDTO.ResBillDTO;
@@ -60,6 +61,15 @@ public class BillController {
     public ResponseEntity<ResultPaginationDTO> getBillByClinicId(@PathVariable("id") long id, Pageable pageable)
             throws IdInvalidException {
         return ResponseEntity.ok(this.billService.getBillByClinicId(id, pageable));
+    }
+
+    @GetMapping("/bill/clinic/{id}/search")
+    @ApiMessage("Search Bill by clinic id")
+    public ResponseEntity<ResultPaginationDTO> getBillByClinicIdSearch(@PathVariable("id") long id, Pageable pageable,
+            BillClinicCriteriaDTO billClinicCriteriaDTO)
+            throws IdInvalidException {
+        billClinicCriteriaDTO.setClinicId(id);
+        return ResponseEntity.ok(this.billService.getBillByClinicIdSearch(billClinicCriteriaDTO, pageable));
     }
 
     @GetMapping("/bill/search")
