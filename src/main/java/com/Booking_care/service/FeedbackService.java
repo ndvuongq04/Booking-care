@@ -8,7 +8,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Feedback;
 import com.Booking_care.domain.Patient;
@@ -16,7 +15,6 @@ import com.Booking_care.domain.dto.ResFeedbackDTO;
 import com.Booking_care.domain.dto.FeedbackDTO.ReqFeedbackDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.FeedbackRepository;
-import com.Booking_care.util.error.IdInvalidException;
 
 @Service
 public class FeedbackService {
@@ -120,6 +118,29 @@ public class FeedbackService {
         if (patient != null) {
             res.setPatient(patientService.convertToResPatientDTO(patient));
         }
+
+        return res;
+    }
+
+    public ResultPaginationDTO fetchFeedbackByDoctorId(Pageable pageable, Long doctorId) {
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<Feedback> page = this.feedbackRepository.findByDoctorId(pageable, doctorId);
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        // convert
+        List<ResFeedbackDTO> listFeedback = page.getContent().stream()
+                .map(item -> this.convertToResFeedbackDTO(item))
+                .collect(Collectors.toList());
+        res.setResult(listFeedback);
+        res.setMeta(meta);
 
         return res;
     }

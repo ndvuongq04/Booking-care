@@ -50,6 +50,20 @@ public class FeedbackController {
                 .body(this.feedbackService.convertToResFeedbackDTO(feedback));
     }
 
+    @GetMapping("/doctor/{doctorId}")
+    @ApiMessage("Fetch feedback by doctor id")
+    public ResponseEntity<ResultPaginationDTO> fetchFeedbackByDoctorId(Pageable pageable,
+            @PathVariable("doctorId") long doctorId)
+            throws IdInvalidException {
+        ResultPaginationDTO res = this.feedbackService.fetchFeedbackByDoctorId(pageable, doctorId);
+
+        if (res == null || res.getMeta() == null || res.getMeta().getTotals() == 0) {
+            throw new IdInvalidException("feedback của doctor id " + doctorId + " không tồn tại");
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(res);
+    }
+
     @GetMapping
     @ApiMessage("Fetch all feedback")
     public ResponseEntity<ResultPaginationDTO> fetchAllFeedback(
