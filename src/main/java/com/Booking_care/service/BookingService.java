@@ -22,6 +22,7 @@ import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.Time;
+import com.Booking_care.domain.dto.BookingDTO.BookingClinicCriteriaDTO;
 import com.Booking_care.domain.dto.BookingDTO.BookingCriteriaDTO;
 import com.Booking_care.domain.dto.BookingDTO.BookingDoctorCriteriaDTO;
 import com.Booking_care.domain.dto.BookingDTO.CreateBookingDTO;
@@ -454,6 +455,61 @@ public class BookingService {
         ResultPaginationDTO res = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
         Page<Booking> page = this.getBookingDoctorWithSpecs(pageable, bookingDoctorCriteriaDTO);
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        // convert
+        List<ResBookingDTO> listBooking = page.getContent().stream()
+                .map(item -> this.convertToBookingDTO(item))
+                .collect(Collectors.toList());
+
+        res.setResult(listBooking);
+        res.setMeta(meta);
+
+        return res;
+    }
+
+    public Page<Booking> getBookingClinicWithSpecs(Pageable pageable, BookingClinicCriteriaDTO dto) {
+        Specification<Booking> spec = Specification
+                .where(BookingSpecs.clinicIdEqual(dto.getClinicId()));
+
+        if (dto.getDoctorId() != null) {
+            spec = spec.and(BookingSpecs.doctorIdEqual(dto.getDoctorId()));
+        }
+
+        if (dto.getPatientName() != null && !dto.getPatientName().isBlank()) {
+            spec = spec.and(BookingSpecs.patientAccountNameLikeIgnoreCase(dto.getPatientName()));
+        }
+
+        if (dto.getMonthYear() != null) {
+            YearMonth monthYear = dto.getMonthYear();
+
+            Instant from = monthYear.atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng
+                    .toInstant();
+
+            Instant to = monthYear.plusMonths(1).atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng kế tiếp
+                    .toInstant();
+
+            Specification<Booking> currentSpec = BookingSpecs.dateBetween(from, to);
+            spec = spec.and(currentSpec);
+        }
+
+        return bookingRepository.findAll(spec, pageable);
+    }
+
+    public ResultPaginationDTO fetchAllBookingClinicSearch(Pageable pageable,
+            BookingClinicCriteriaDTO bookingClinicCriteriaDTO) {
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<Booking> page = this.getBookingClinicWithSpecs(pageable, bookingClinicCriteriaDTO);
 
         // từ fe
         meta.setPage(pageable.getPageNumber() + 1);

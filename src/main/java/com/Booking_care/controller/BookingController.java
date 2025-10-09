@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.Booking_care.domain.dto.BookingDTO.BookingClinicCriteriaDTO;
 import com.Booking_care.domain.dto.BookingDTO.BookingCriteriaDTO;
 import com.Booking_care.domain.dto.BookingDTO.BookingDoctorCriteriaDTO;
 import com.Booking_care.domain.dto.BookingDTO.CreateBookingDTO;
@@ -155,6 +156,17 @@ public class BookingController {
         return ResponseEntity.ok(res);
     }
 
+    // get booking by clinic id and search
+    @GetMapping("/bookings/clinic/{id}/search")
+    public ResponseEntity<ResultPaginationDTO> getBookingsByClinicIdSearch(@PathVariable Long id,
+            Pageable pageable, BookingClinicCriteriaDTO bookingClinicCriteriaDTO) throws IdInvalidException {
+
+        bookingClinicCriteriaDTO.setClinicId(id);
+        ResultPaginationDTO res = this.bookingService.fetchAllBookingClinicSearch(pageable, bookingClinicCriteriaDTO);
+
+        return ResponseEntity.ok(res);
+    }
+
     // get availability time of doctor empty ( kiểm tra xem ngày này bác sĩ còn bao
     // nhiêu time trống )
     @GetMapping("/bookings/doctor/{doctorId}/available-times")
@@ -172,7 +184,5 @@ public class BookingController {
             BookingCriteriaDTO bookingCriteriaDTO) {
         return ResponseEntity.ok(bookingService.fetchAllBookingSearch(pageable, bookingCriteriaDTO));
     }
-
-    // get booing by doctor and appointmentDate => sẽ dùng specification
 
 }

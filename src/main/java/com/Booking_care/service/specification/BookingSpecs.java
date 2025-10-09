@@ -3,6 +3,7 @@ package com.Booking_care.service.specification;
 import java.time.Instant;
 import org.springframework.data.jpa.domain.Specification;
 import com.Booking_care.domain.Booking_;
+import com.Booking_care.domain.Clinic_;
 import com.Booking_care.domain.Doctor_;
 import com.Booking_care.domain.Patient_;
 import com.Booking_care.domain.Account_;
@@ -23,11 +24,13 @@ public class BookingSpecs {
     }
 
     public static Specification<Booking> doctorIdEqual(Long doctorId) {
-        return (root, query, cb) -> {
-            if (doctorId == null)
-                return null;
-            return cb.equal(root.get(Booking_.doctor).get(Doctor_.id), doctorId);
-        };
+        return doctorId == null ? null
+                : SpecUtil.joinEqual(Booking_.doctor, Doctor_.id, doctorId);
+    }
+
+    public static Specification<Booking> clinicIdEqual(Long clinicId) {
+        return clinicId == null ? null
+                : SpecUtil.joinEqual(Booking_.clinic, Clinic_.id, clinicId);
     }
 
 }
