@@ -14,7 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AccountCriteriaDTO {
-    private String role;
+    private String roleName;
     private String gender;
 
     @DateTimeFormat(pattern = "MM/yyyy")

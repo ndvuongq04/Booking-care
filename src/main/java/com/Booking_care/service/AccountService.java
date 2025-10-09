@@ -1,5 +1,8 @@
 package com.Booking_care.service;
 
+import java.time.Instant;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -193,44 +196,47 @@ public class AccountService {
     public Page<Account> getAllAccountWithSpec(AccountCriteriaDTO accountCriteriaDTO, Pageable pageable) {
         Specification<Account> combinedSpec = Specification.where(null);
 
-        if (accountCriteriaDTO.getRole() != null) {
-            // roleName -> roleId ( sẽ dùng name query Db lấy roleID )
-            String roleName = accountCriteriaDTO.getRole().trim().toUpperCase();
-            long roleID = roleName.equals("ADMIN") ? 1
-                    : roleName.equals("CLIENT") ? 2
-                            : roleName.equals("DOCTOR") ? 3 : 4;
-
-            Specification<Account> currentSpecs = AccountSpecs.roleEqual(roleID);
-            combinedSpec = combinedSpec.and(currentSpecs);
+        if (accountCriteriaDTO.getRoleName() != null && !accountCriteriaDTO.getRoleName().trim().isEmpty()) {
+            // Equal:
+            combinedSpec = combinedSpec.and(
+                    AccountSpecs.roleNameEqual(accountCriteriaDTO.getRoleName().trim()));
         }
 
-        if (accountCriteriaDTO.getMonthYear() != null) {
-            Specification<Account> currentSpecs = AccountSpecs.createAtBetween(accountCriteriaDTO.getMonthYear());
-            combinedSpec = combinedSpec.and(currentSpecs);
+        if (accountCriteriaDTO.getGender() != null && !accountCriteriaDTO.getGender().trim().isEmpty()) {
+            combinedSpec = combinedSpec.and(
+                    AccountSpecs.genderEqual(accountCriteriaDTO.getGender().trim()));
         }
 
-        if (accountCriteriaDTO.getGender() != null) {
-            Specification<Account> currentSpecs = AccountSpecs.genderEqual(accountCriteriaDTO.getGender());
-            combinedSpec = combinedSpec.and(currentSpecs);
+        YearMonth monthYear = accountCriteriaDTO.getMonthYear();
+        if (monthYear != null) {
+            Instant from = monthYear.atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC)
+                    .toInstant();
+
+            Instant to = monthYear.plusMonths(1).atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC)
+                    .toInstant();
+
+            combinedSpec = combinedSpec.and(
+                    AccountSpecs.createdAtBetween(from, to));
         }
 
-        if (accountCriteriaDTO.getCccd() != null) {
-            Specification<Account> currentSpecs = AccountSpecs.cccdEqual(accountCriteriaDTO.getCccd());
-            combinedSpec = combinedSpec.and(currentSpecs);
+        if (accountCriteriaDTO.getCccd() != null && !accountCriteriaDTO.getCccd().trim().isEmpty()) {
+            combinedSpec = combinedSpec.and(
+                    AccountSpecs.cccdLike(accountCriteriaDTO.getCccd().trim()));
         }
 
-        if (accountCriteriaDTO.getPhoneNumber() != null) {
-            Specification<Account> currentSpecs = AccountSpecs.phoneNumberLike(accountCriteriaDTO.getPhoneNumber());
-            combinedSpec = combinedSpec.and(currentSpecs);
+        if (accountCriteriaDTO.getEmail() != null && !accountCriteriaDTO.getEmail().trim().isEmpty()) {
+            combinedSpec = combinedSpec.and(
+                    AccountSpecs.emailLike(accountCriteriaDTO.getEmail().trim()));
         }
 
-        if (accountCriteriaDTO.getEmail() != null) {
-            Specification<Account> currentSpecs = AccountSpecs.emailLike(accountCriteriaDTO.getEmail());
-            combinedSpec = combinedSpec.and(currentSpecs);
+        if (accountCriteriaDTO.getPhoneNumber() != null && !accountCriteriaDTO.getPhoneNumber().trim().isEmpty()) {
+            combinedSpec = combinedSpec.and(
+                    AccountSpecs.phoneNumberLike(accountCriteriaDTO.getPhoneNumber().trim()));
         }
 
         return this.accountRepository.findAll(combinedSpec, pageable);
-
     }
 
     public Account fetchAccountByEmail(String email) {
