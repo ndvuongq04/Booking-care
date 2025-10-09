@@ -4,18 +4,15 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Booking;
 import com.Booking_care.domain.Clinic;
@@ -32,7 +29,6 @@ import com.Booking_care.domain.enums.BookingStatusEnum;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.BookingRepository;
 import com.Booking_care.service.specification.BookingSpecs;
-import com.Booking_care.service.specification.ClinicSpecs;
 import com.Booking_care.util.error.BusinessException;
 import com.Booking_care.util.error.IdInvalidException;
 
@@ -204,31 +200,24 @@ public class BookingService {
         return bookingRepository.save(existing);
     }
 
-    private void validateBookingDate(Instant appointmentInstant, Time timeSlot) throws BusinessException {
-        ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
+    private void validateBookingDate(LocalDate appointmentDate, Time timeSlot) throws BusinessException {
+        LocalDate today = LocalDate.now();
 
-        LocalDate today = LocalDate.now(zone);
-        LocalDate apptDate = appointmentInstant.atZone(zone).toLocalDate();
-
-        if (apptDate.isBefore(today)) {
+        if (appointmentDate.isBefore(today)) {
             throw new BusinessException("Ngày đặt lịch không được trong quá khứ");
         }
 
-        if (apptDate.isEqual(today)) {
-            LocalTime now = LocalTime.now(zone);
-            LocalTime slotStart = LocalTime.parse(timeSlot.getStart()); // "HH:mm"
+        if (appointmentDate.isEqual(today)) {
+            LocalTime now = LocalTime.now();
+            LocalTime slotStart = LocalTime.parse(timeSlot.getStart());
             if (now.isAfter(slotStart)) {
-                throw new BusinessException("Ca khám này đã trôi qua, vui lòng chọn khung giờ khác");
-            }
-
-            Instant slotStartInstant = apptDate.atTime(slotStart).atZone(zone).toInstant();
-            if (Instant.now().isAfter(slotStartInstant)) {
                 throw new BusinessException("Ca khám này đã trôi qua, vui lòng chọn khung giờ khác");
             }
         }
 
+        // Giới hạn đặt trước tối đa 6 tháng
         LocalDate maxDate = today.plusMonths(6);
-        if (apptDate.isAfter(maxDate)) {
+        if (appointmentDate.isAfter(maxDate)) {
             throw new BusinessException("Không được đặt lịch xa quá 6 tháng");
         }
     }
@@ -330,7 +319,7 @@ public class BookingService {
         return res;
     }
 
-    public ResultPaginationDTO getBookingsByDoctorAndDate(Long doctorId, Instant appointmentDate, Pageable pageable) {
+    public ResultPaginationDTO getBookingsByDoctorAndDate(Long doctorId, LocalDate appointmentDate, Pageable pageable) {
         Page<Booking> page = bookingRepository.findByDoctorIdAndAppointmentDate(doctorId, appointmentDate, pageable);
 
         ResultPaginationDTO res = new ResultPaginationDTO();
@@ -347,7 +336,7 @@ public class BookingService {
         return res;
     }
 
-    public List<ResBookingDTO.ResTimeDTO> getAvailableTimes(Long doctorId, Instant appointmentDate) {
+    public List<ResBookingDTO.ResTimeDTO> getAvailableTimes(Long doctorId, LocalDate appointmentDate) {
         // Tất cả slot trong hệ thống
         List<Time> allTimes = this.timeService.getAllTimes();
 
@@ -381,18 +370,9 @@ public class BookingService {
             combinedSpec = combinedSpec.and(currentSpec);
         }
 
-        if (bookingCriteriaDTO.getMonthYear() != null) {
-            YearMonth monthYear = bookingCriteriaDTO.getMonthYear();
-
-            Instant from = monthYear.atDay(1)
-                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng
-                    .toInstant();
-
-            Instant to = monthYear.plusMonths(1).atDay(1)
-                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng kế tiếp
-                    .toInstant();
-
-            Specification<Booking> currentSpec = BookingSpecs.dateBetween(from, to);
+        if (bookingCriteriaDTO.getDate() != null) {
+            LocalDate date = bookingCriteriaDTO.getDate();
+            Specification<Booking> currentSpec = BookingSpecs.appointmentDateEqual(date);
             combinedSpec = combinedSpec.and(currentSpec);
         }
 
@@ -432,18 +412,9 @@ public class BookingService {
             spec = spec.and(BookingSpecs.patientAccountNameLikeIgnoreCase(dto.getName()));
         }
 
-        if (dto.getMonthYear() != null) {
-            YearMonth monthYear = dto.getMonthYear();
-
-            Instant from = monthYear.atDay(1)
-                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng
-                    .toInstant();
-
-            Instant to = monthYear.plusMonths(1).atDay(1)
-                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng kế tiếp
-                    .toInstant();
-
-            Specification<Booking> currentSpec = BookingSpecs.dateBetween(from, to);
+        if (dto.getDate() != null) {
+            LocalDate date = dto.getDate();
+            Specification<Booking> currentSpec = BookingSpecs.appointmentDateEqual(date);
             spec = spec.and(currentSpec);
         }
 
@@ -487,18 +458,9 @@ public class BookingService {
             spec = spec.and(BookingSpecs.patientAccountNameLikeIgnoreCase(dto.getPatientName()));
         }
 
-        if (dto.getMonthYear() != null) {
-            YearMonth monthYear = dto.getMonthYear();
-
-            Instant from = monthYear.atDay(1)
-                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng
-                    .toInstant();
-
-            Instant to = monthYear.plusMonths(1).atDay(1)
-                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng kế tiếp
-                    .toInstant();
-
-            Specification<Booking> currentSpec = BookingSpecs.dateBetween(from, to);
+        if (dto.getDate() != null) {
+            LocalDate date = dto.getDate();
+            Specification<Booking> currentSpec = BookingSpecs.appointmentDateEqual(date);
             spec = spec.and(currentSpec);
         }
 

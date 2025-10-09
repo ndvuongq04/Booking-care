@@ -1,6 +1,6 @@
 package com.Booking_care.service.specification;
 
-import java.time.Instant;
+import java.time.LocalDate;
 import org.springframework.data.jpa.domain.Specification;
 import com.Booking_care.domain.Booking_;
 import com.Booking_care.domain.Clinic_;
@@ -19,7 +19,7 @@ public class BookingSpecs {
         return SpecUtil.joinLikeIgnoreCase(Booking_.patient, Patient_.account, Account_.phoneNumber, phoneNumber);
     }
 
-    public static Specification<Booking> dateBetween(Instant from, Instant to) {
+    public static Specification<Booking> dateBetween(LocalDate from, LocalDate to) {
         return SpecUtil.between(Booking_.appointmentDate, from, to);
     }
 
@@ -29,12 +29,16 @@ public class BookingSpecs {
 
     public static Specification<Booking> doctorIdEqual(Long doctorId) {
         return doctorId == null ? null
-                : SpecUtil.joinEqual(Booking_.clinic, Clinic_.id, doctorId);
+                : SpecUtil.joinEqual(Booking_.doctor, Doctor_.id, doctorId);
     }
 
     public static Specification<Booking> clinicIdEqual(Long clinicId) {
         return clinicId == null ? null
                 : SpecUtil.joinEqual(Booking_.clinic, Clinic_.id, clinicId);
+    }
+
+    public static Specification<Booking> appointmentDateEqual(LocalDate d) {
+        return SpecUtil.equal(Booking_.appointmentDate, d);
     }
 
 }

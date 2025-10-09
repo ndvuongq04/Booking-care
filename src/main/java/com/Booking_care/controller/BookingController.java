@@ -1,7 +1,6 @@
 package com.Booking_care.controller;
 
 import java.util.List;
-import java.time.Instant;
 import java.time.LocalDate;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Doctor;
@@ -25,7 +24,6 @@ import com.Booking_care.domain.dto.BookingDTO.ResBookingDTO;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.Booking_care.domain.dto.BookingDTO.BookingClinicCriteriaDTO;
 import com.Booking_care.domain.dto.BookingDTO.BookingCriteriaDTO;
 import com.Booking_care.domain.dto.BookingDTO.BookingDoctorCriteriaDTO;
@@ -172,7 +170,7 @@ public class BookingController {
     @GetMapping("/bookings/doctor/{doctorId}/available-times")
     public ResponseEntity<List<ResBookingDTO.ResTimeDTO>> getAvailableTimes(
             @PathVariable Long doctorId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Instant appointmentDate) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate appointmentDate) {
 
         return ResponseEntity.ok(bookingService.getAvailableTimes(doctorId, appointmentDate));
     }
