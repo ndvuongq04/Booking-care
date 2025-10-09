@@ -5,20 +5,19 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-
-import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.MedicalRecord;
 import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.Specialty;
-import com.Booking_care.domain.dto.AccountDTO.AccountCriteriaDTO;
-import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
+import com.Booking_care.domain.dto.MedicalRecordDTO.MedicalRecordCriteriaDTO;
 import com.Booking_care.domain.dto.MedicalRecordDTO.ReqMedicalRecordDTO;
 import com.Booking_care.domain.dto.MedicalRecordDTO.ResMedicalRecordDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.MedicalRecordsRepository;
+import com.Booking_care.service.specification.MedicalRecordSpecs;
 import com.Booking_care.util.error.IdInvalidException;
 
 @Service
@@ -80,7 +79,7 @@ public class MedicalRecordsService {
         if (record.getPatient() != null) {
             ResMedicalRecordDTO.PatientDTO pDto = new ResMedicalRecordDTO.PatientDTO();
             pDto.setId(record.getPatient().getId());
-            pDto.setName(record.getPatient().getAccount().getName()); // giả sử Patient có Account chứa name
+            pDto.setName(record.getPatient().getAccount().getName());
             dto.setPatient(pDto);
         }
 
@@ -88,7 +87,7 @@ public class MedicalRecordsService {
         if (record.getDoctor() != null) {
             ResMedicalRecordDTO.DoctorDTO dDto = new ResMedicalRecordDTO.DoctorDTO();
             dDto.setId(record.getDoctor().getId());
-            dDto.setName(record.getDoctor().getAccount().getName()); // giả sử Doctor có Account chứa name
+            dDto.setName(record.getDoctor().getAccount().getName());
             dDto.setDegree(record.getDoctor().getDegree().name());
             dto.setDoctor(dDto);
         }
@@ -182,6 +181,47 @@ public class MedicalRecordsService {
                 .collect(Collectors.toList());
 
         res.setResult(listAcc);
+        res.setMeta(meta);
+
+        return res;
+    }
+
+    public Page<MedicalRecord> getPatientOfDoctorWithSpecs(
+            Pageable pageable, MedicalRecordCriteriaDTO dto) {
+
+        Specification<MedicalRecord> spec = Specification
+                .where(MedicalRecordSpecs.doctorIdJoinEqual(dto.getDoctorId()));
+
+        if (dto.getName() != null && !dto.getName().isBlank()) {
+            spec = spec.and(MedicalRecordSpecs.nameJoinLikeIgnoreCase(dto.getName()));
+        }
+        if (dto.getPhoneNumber() != null && !dto.getPhoneNumber().isBlank()) {
+            spec = spec.and(MedicalRecordSpecs.phoneNumberJoinLikeIgnoreCase(dto.getPhoneNumber()));
+        }
+
+        return this.medicalRecordsRepository.findAll(spec, pageable);
+    }
+
+    public ResultPaginationDTO fetchAllMedicalRecordsByDoctorSearch(Pageable pageable,
+            MedicalRecordCriteriaDTO medicalRecordCriteriaDTO) {
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<MedicalRecord> page = this.getPatientOfDoctorWithSpecs(pageable, medicalRecordCriteriaDTO);
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        // convert
+        List<ResMedicalRecordDTO> listMed = page.getContent().stream()
+                .map(item -> this.convertToMedicalRecordDTO(item))
+                .collect(Collectors.toList());
+
+        res.setResult(listMed);
         res.setMeta(meta);
 
         return res;

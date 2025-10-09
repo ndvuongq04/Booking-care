@@ -10,11 +10,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.Booking_care.domain.Account;
 import com.Booking_care.domain.MedicalRecord;
-import com.Booking_care.domain.dto.AccountDTO.CreateAccountDTO;
-import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
+import com.Booking_care.domain.dto.MedicalRecordDTO.MedicalRecordCriteriaDTO;
 import com.Booking_care.domain.dto.MedicalRecordDTO.ReqMedicalRecordDTO;
 import com.Booking_care.domain.dto.MedicalRecordDTO.ResMedicalRecordDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
@@ -127,6 +124,17 @@ public class MedicalRecordsController {
     public ResponseEntity<ResultPaginationDTO> getAllMedicalRecordByDoctor(
             Pageable pageable, @PathVariable("id") long doctorId) {
         ResultPaginationDTO result = this.medicalRecordsService.fetchAllMedicalRecordsByDoctor(pageable, doctorId);
+        return ResponseEntity.ok().body(result);
+    }
+
+    @GetMapping("/medicalRecord/doctor/{id}/search")
+    @ApiMessage("Fetch all medicalRecord by doctor search")
+    public ResponseEntity<ResultPaginationDTO> getAllMedicalRecordByDoctorSearch(
+            Pageable pageable, MedicalRecordCriteriaDTO medicalRecordCriteriaDTO, @PathVariable("id") long id) {
+
+        medicalRecordCriteriaDTO.setDoctorId(id);
+        ResultPaginationDTO result = this.medicalRecordsService.fetchAllMedicalRecordsByDoctorSearch(pageable,
+                medicalRecordCriteriaDTO);
         return ResponseEntity.ok().body(result);
     }
 
