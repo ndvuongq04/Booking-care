@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.Booking_care.domain.enums.DegreeEnum;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -43,6 +44,9 @@ public class Doctor {
 
     private Instant createAt;
     private Instant updateAt;
+
+    @Column(columnDefinition = "MEDIUMTEXT")
+    private String description;
 
     @Enumerated(EnumType.STRING)
     @NotNull(message = "Degree không được để trống")

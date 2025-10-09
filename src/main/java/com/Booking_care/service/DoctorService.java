@@ -63,6 +63,7 @@ public class DoctorService {
         dto.setIsActive(doctor.getIsActive());
         dto.setCreateAt(doctor.getCreateAt());
         dto.setUpdateAt(doctor.getUpdateAt());
+        dto.setDescription(doctor.getDescription());
         dto.setCost((doctor.getCost()));
 
         if (doctor.getAccount() != null) {
@@ -94,6 +95,7 @@ public class DoctorService {
         if (currentDoctor != null) {
             currentDoctor.setCost(doctor.getCost());
             currentDoctor.setDegree(doctor.getDegree());
+            currentDoctor.setDescription(doctor.getDescription());
 
             if (doctor.getClinic() != null) {
                 Clinic clinic = this.clinicService.fetchClinicById(doctor.getClinic().getId());

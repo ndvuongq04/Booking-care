@@ -88,7 +88,7 @@ public class ClinicController {
     @ApiMessage("Update a clinic")
     public ResponseEntity<ResClinicDTO> updateAccount(@Valid @ModelAttribute ReqClinicDTO reqClinic,
             @PathVariable("id") long id,
-            @RequestParam("file") MultipartFile file)
+            @RequestParam(value = "file", required = false) MultipartFile file)
             throws IdInvalidException, StorageException {
         Clinic c = this.clinicService.fetchClinicById(id);
 

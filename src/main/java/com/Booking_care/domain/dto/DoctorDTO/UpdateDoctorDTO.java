@@ -40,4 +40,6 @@ public class UpdateDoctorDTO {
 
     @NotNull(message = "Specialty không được để trống")
     private Specialty specialty;
+
+    private String description;
 }

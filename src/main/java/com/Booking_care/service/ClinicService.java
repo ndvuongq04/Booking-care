@@ -109,6 +109,7 @@ public class ClinicService {
             c.setName(clinic.getName());
             c.setPhoneNumber(clinic.getPhoneNumber());
             c.setPosition(clinic.getPosition());
+            c.setDescription(clinic.getDescription());
             c.setIsActive(clinic.getIsActive());
 
             // upload image

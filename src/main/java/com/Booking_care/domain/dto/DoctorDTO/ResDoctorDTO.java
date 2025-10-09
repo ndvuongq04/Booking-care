@@ -22,6 +22,7 @@ public class ResDoctorDTO {
     private Instant createAt;
     private Instant updateAt;
     private BigDecimal cost;
+    private String description;
     private ResAccountDTO account;
     private ResClinicDTO clinic;
     private String specialtyName;
