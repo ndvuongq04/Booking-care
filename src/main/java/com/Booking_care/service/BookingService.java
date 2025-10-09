@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
@@ -22,6 +23,7 @@ import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.Time;
 import com.Booking_care.domain.dto.BookingDTO.BookingCriteriaDTO;
+import com.Booking_care.domain.dto.BookingDTO.BookingDoctorCriteriaDTO;
 import com.Booking_care.domain.dto.BookingDTO.CreateBookingDTO;
 import com.Booking_care.domain.dto.BookingDTO.ResBookingDTO;
 import com.Booking_care.domain.dto.BookingDTO.UpdateBookingDTO;
@@ -201,24 +203,31 @@ public class BookingService {
         return bookingRepository.save(existing);
     }
 
-    private void validateBookingDate(LocalDate appointmentDate, Time timeSlot) throws BusinessException {
-        LocalDate today = LocalDate.now();
+    private void validateBookingDate(Instant appointmentInstant, Time timeSlot) throws BusinessException {
+        ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
 
-        if (appointmentDate.isBefore(today)) {
+        LocalDate today = LocalDate.now(zone);
+        LocalDate apptDate = appointmentInstant.atZone(zone).toLocalDate();
+
+        if (apptDate.isBefore(today)) {
             throw new BusinessException("Ngày đặt lịch không được trong quá khứ");
         }
 
-        if (appointmentDate.isEqual(today)) {
-            LocalTime now = LocalTime.now();
-            LocalTime slotStart = LocalTime.parse(timeSlot.getStart());
+        if (apptDate.isEqual(today)) {
+            LocalTime now = LocalTime.now(zone);
+            LocalTime slotStart = LocalTime.parse(timeSlot.getStart()); // "HH:mm"
             if (now.isAfter(slotStart)) {
+                throw new BusinessException("Ca khám này đã trôi qua, vui lòng chọn khung giờ khác");
+            }
+
+            Instant slotStartInstant = apptDate.atTime(slotStart).atZone(zone).toInstant();
+            if (Instant.now().isAfter(slotStartInstant)) {
                 throw new BusinessException("Ca khám này đã trôi qua, vui lòng chọn khung giờ khác");
             }
         }
 
-        // Giới hạn đặt trước tối đa 6 tháng
         LocalDate maxDate = today.plusMonths(6);
-        if (appointmentDate.isAfter(maxDate)) {
+        if (apptDate.isAfter(maxDate)) {
             throw new BusinessException("Không được đặt lịch xa quá 6 tháng");
         }
     }
@@ -320,7 +329,7 @@ public class BookingService {
         return res;
     }
 
-    public ResultPaginationDTO getBookingsByDoctorAndDate(Long doctorId, LocalDate appointmentDate, Pageable pageable) {
+    public ResultPaginationDTO getBookingsByDoctorAndDate(Long doctorId, Instant appointmentDate, Pageable pageable) {
         Page<Booking> page = bookingRepository.findByDoctorIdAndAppointmentDate(doctorId, appointmentDate, pageable);
 
         ResultPaginationDTO res = new ResultPaginationDTO();
@@ -337,7 +346,7 @@ public class BookingService {
         return res;
     }
 
-    public List<ResBookingDTO.ResTimeDTO> getAvailableTimes(Long doctorId, LocalDate appointmentDate) {
+    public List<ResBookingDTO.ResTimeDTO> getAvailableTimes(Long doctorId, Instant appointmentDate) {
         // Tất cả slot trong hệ thống
         List<Time> allTimes = this.timeService.getAllTimes();
 
@@ -393,6 +402,58 @@ public class BookingService {
         ResultPaginationDTO res = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
         Page<Booking> page = this.getBookingWithSpecs(pageable, bookingCriteriaDTO);
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        // convert
+        List<ResBookingDTO> listBooking = page.getContent().stream()
+                .map(item -> this.convertToBookingDTO(item))
+                .collect(Collectors.toList());
+
+        res.setResult(listBooking);
+        res.setMeta(meta);
+
+        return res;
+    }
+
+    public Page<Booking> getBookingDoctorWithSpecs(
+            Pageable pageable, BookingDoctorCriteriaDTO dto) {
+        Specification<Booking> spec = Specification
+                .where(BookingSpecs.doctorIdEqual(dto.getDoctorId()));
+
+        if (dto.getName() != null && !dto.getName().isBlank()) {
+            spec = spec.and(BookingSpecs.patientAccountNameLikeIgnoreCase(dto.getName()));
+        }
+
+        if (dto.getMonthYear() != null) {
+            YearMonth monthYear = dto.getMonthYear();
+
+            Instant from = monthYear.atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng
+                    .toInstant();
+
+            Instant to = monthYear.plusMonths(1).atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC) // mốc 00:00 ngày đầu tháng kế tiếp
+                    .toInstant();
+
+            Specification<Booking> currentSpec = BookingSpecs.dateBetween(from, to);
+            spec = spec.and(currentSpec);
+        }
+
+        return bookingRepository.findAll(spec, pageable);
+    }
+
+    public ResultPaginationDTO fetchAllBookingDoctorSearch(Pageable pageable,
+            BookingDoctorCriteriaDTO bookingDoctorCriteriaDTO) {
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+        Page<Booking> page = this.getBookingDoctorWithSpecs(pageable, bookingDoctorCriteriaDTO);
 
         // từ fe
         meta.setPage(pageable.getPageNumber() + 1);

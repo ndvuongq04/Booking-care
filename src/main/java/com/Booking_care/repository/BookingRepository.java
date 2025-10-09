@@ -1,6 +1,6 @@
 package com.Booking_care.repository;
 
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -15,13 +15,13 @@ import com.Booking_care.domain.enums.BookingStatusEnum;
 public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpecificationExecutor<Booking> {
         boolean existsByPatientIdAndAppointmentDateAndTimeIdAndStatusNot(
                         Long patientId,
-                        LocalDate appointmentDate,
+                        Instant appointmentDate,
                         Long timeId,
                         BookingStatusEnum status);
 
         boolean existsByDoctorIdAndAppointmentDateAndTimeIdAndStatusNot(
                         Long doctorId,
-                        LocalDate appointmentDate,
+                        Instant appointmentDate,
                         Long timeId,
                         BookingStatusEnum status);
 
@@ -31,9 +31,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
 
         Page<Booking> findByClinicId(Long clinicId, Pageable pageable);
 
-        Page<Booking> findByDoctorIdAndAppointmentDate(Long doctorId, LocalDate appointmentDate, Pageable pageable);
+        Page<Booking> findByDoctorIdAndAppointmentDate(Long doctorId, Instant appointmentDate, Pageable pageable);
 
-        List<Booking> findByDoctorIdAndAppointmentDate(Long doctorId, LocalDate appointmentDate);
+        List<Booking> findByDoctorIdAndAppointmentDate(Long doctorId, Instant appointmentDate);
 
         Page<Booking> findAll(Specification<Booking> specs, Pageable pageable);
 }

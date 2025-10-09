@@ -18,7 +18,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ResBookingDTO {
     private Long id;
-    private LocalDate appointmentDate;
+    private Instant appointmentDate;
     private String description;
     private Instant createAt;
     private Instant updateAt;

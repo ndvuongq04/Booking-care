@@ -1,5 +1,6 @@
 package com.Booking_care.domain.dto.BookingDTO;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -13,7 +14,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class CreateBookingDTO {
     @NotNull(message = "Ngày khám không được để trống")
-    private LocalDate appointmentDate;
+    private Instant appointmentDate;
 
     private String description;
 

@@ -32,7 +32,7 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private LocalDate appointmentDate; // ngày khám
+    private Instant appointmentDate; // ngày khám
     private String description;
     private Instant createAt;
     private Instant updateAt;

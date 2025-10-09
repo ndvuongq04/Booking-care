@@ -1,6 +1,7 @@
 package com.Booking_care.controller;
 
 import java.util.List;
+import java.time.Instant;
 import java.time.LocalDate;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Doctor;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Booking_care.domain.dto.BookingDTO.BookingCriteriaDTO;
+import com.Booking_care.domain.dto.BookingDTO.BookingDoctorCriteriaDTO;
 import com.Booking_care.domain.dto.BookingDTO.CreateBookingDTO;
 import com.Booking_care.domain.dto.BookingDTO.UpdateBookingDTO;
 
@@ -129,6 +131,15 @@ public class BookingController {
         return ResponseEntity.ok(res);
     }
 
+    @GetMapping("/bookings/doctor/{id}/search")
+    public ResponseEntity<ResultPaginationDTO> getBookingsByDoctorIdSearch(@PathVariable Long id,
+            BookingDoctorCriteriaDTO bookingDoctorCriteriaDTO,
+            Pageable pageable) throws IdInvalidException {
+        bookingDoctorCriteriaDTO.setDoctorId(id);
+        ResultPaginationDTO res = this.bookingService.fetchAllBookingDoctorSearch(pageable, bookingDoctorCriteriaDTO);
+        return ResponseEntity.ok(res);
+    }
+
     // get booking by clinic id
     @GetMapping("/bookings/clinic/{id}")
     public ResponseEntity<ResultPaginationDTO> getBookingsByClinicId(@PathVariable Long id,
@@ -149,7 +160,7 @@ public class BookingController {
     @GetMapping("/bookings/doctor/{doctorId}/available-times")
     public ResponseEntity<List<ResBookingDTO.ResTimeDTO>> getAvailableTimes(
             @PathVariable Long doctorId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate appointmentDate) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Instant appointmentDate) {
 
         return ResponseEntity.ok(bookingService.getAvailableTimes(doctorId, appointmentDate));
     }
