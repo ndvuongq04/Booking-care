@@ -22,7 +22,9 @@ public class ResLoginDTO {
         private String name;
         private String email;
         private String role;
-        private Long patientId;
+
+        private String actorType;
+        private Long actorId; // id theo role (doctorId/patientId/...)
 
     }
 }

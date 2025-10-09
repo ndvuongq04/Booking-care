@@ -94,11 +94,32 @@ public class AuthController {
                     ? currentAcc.getPatient().getId()
                     : null;
 
+            Long actorId = null;
+            String actorType = currentAcc.getRole().getName();
+
+            switch (actorType) {
+                case "CLIENT":
+                    actorId = (currentAcc.getPatient() != null) ? currentAcc.getPatient().getId() : currentAcc.getId();
+                    break;
+                case "DOCTOR":
+                    actorId = (currentAcc.getDoctor() != null) ? currentAcc.getDoctor().getId() : currentAcc.getId();
+                    break;
+                case "ADMIN":
+                    actorId = currentAcc.getId();
+                    break;
+                case "SUPPORT":
+                    actorId = (currentAcc.getSupport() != null) ? currentAcc.getSupport().getId() : currentAcc.getId();
+                    break;
+                default:
+                    actorId = currentAcc.getId();
+            }
+
             ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(currentAcc.getId(),
                     currentAcc.getName(),
                     currentAcc.getEmail(),
                     currentAcc.getRole().getName().toUpperCase(),
-                    patientId);
+                    actorType,
+                    actorId);
             res.setUserLogin(userLogin);
         }
 
@@ -171,13 +192,35 @@ public class AuthController {
             Long patientId = (currentAccountDB != null && currentAccountDB.getPatient() != null)
                     ? currentAccountDB.getPatient().getId()
                     : null;
+            Long actorId = null;
+            String actorType = currentAccountDB.getRole().getName();
+
+            switch (actorType) {
+                case "CLIENT":
+                    actorId = (currentAccountDB.getPatient() != null) ? currentAccountDB.getPatient().getId()
+                            : currentAccountDB.getId();
+                    break;
+                case "DOCTOR":
+                    actorId = (currentAccountDB.getDoctor() != null) ? currentAccountDB.getDoctor().getId()
+                            : currentAccountDB.getId();
+                    break;
+                case "ADMIN":
+                    actorId = currentAccountDB.getId();
+                    break;
+                case "SUPPORT":
+                    actorId = (currentAccountDB.getSupport() != null) ? currentAccountDB.getSupport().getId()
+                            : currentAccountDB.getId();
+                    break;
+                default:
+                    actorId = currentAccountDB.getId();
+            }
 
             ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(
                     currentAccountDB.getId(),
                     currentAccountDB.getEmail(),
                     currentAccountDB.getName(),
                     currentAccountDB.getRole().getName().toString().toUpperCase(),
-                    patientId);
+                    actorType, actorId);
             res.setUserLogin(userLogin);
 
         }
