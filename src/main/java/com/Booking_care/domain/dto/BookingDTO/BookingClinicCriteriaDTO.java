@@ -13,7 +13,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class BookingClinicCriteriaDTO {
     private Long clinicId;
-    private Long doctorId;
+    private String doctorName;
     private String patientName;
     @DateTimeFormat(pattern = "MM/yyyy")
     private YearMonth monthYear;

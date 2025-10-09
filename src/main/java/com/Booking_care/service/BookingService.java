@@ -479,8 +479,8 @@ public class BookingService {
         Specification<Booking> spec = Specification
                 .where(BookingSpecs.clinicIdEqual(dto.getClinicId()));
 
-        if (dto.getDoctorId() != null) {
-            spec = spec.and(BookingSpecs.doctorIdEqual(dto.getDoctorId()));
+        if (dto.getDoctorName() != null && !dto.getDoctorName().isBlank()) {
+            spec = spec.and(BookingSpecs.doctorIdLikeIgnoreCase(dto.getDoctorName()));
         }
 
         if (dto.getPatientName() != null && !dto.getPatientName().isBlank()) {

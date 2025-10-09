@@ -23,9 +23,13 @@ public class BookingSpecs {
         return SpecUtil.between(Booking_.appointmentDate, from, to);
     }
 
+    public static Specification<Booking> doctorIdLikeIgnoreCase(String doctorName) {
+        return SpecUtil.joinLikeIgnoreCase(Booking_.doctor, Doctor_.account, Account_.name, doctorName);
+    }
+
     public static Specification<Booking> doctorIdEqual(Long doctorId) {
         return doctorId == null ? null
-                : SpecUtil.joinEqual(Booking_.doctor, Doctor_.id, doctorId);
+                : SpecUtil.joinEqual(Booking_.clinic, Clinic_.id, doctorId);
     }
 
     public static Specification<Booking> clinicIdEqual(Long clinicId) {
