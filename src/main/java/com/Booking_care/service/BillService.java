@@ -65,15 +65,6 @@ public class BillService {
         }
         bill.setPatient(patient);
 
-        // Medical Record
-        MedicalRecord medicalRecord = this.medicalRecordsService
-                .fetchMedicalRecordById(reqBillDTO.getMedicalRecordId());
-        if (medicalRecord == null) {
-            throw new IdInvalidException(
-                    "MedicalRecord với id : " + reqBillDTO.getMedicalRecordId() + " không tồn tại");
-        }
-        bill.setMedicalRecord(medicalRecord);
-
         // Support
         Support support = this.supportService.fetchSupportById(reqBillDTO.getSupportId());
         if (support == null) {

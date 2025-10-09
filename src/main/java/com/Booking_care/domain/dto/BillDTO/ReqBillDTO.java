@@ -1,9 +1,7 @@
 package com.Booking_care.domain.dto.BillDTO;
 
 import java.util.List;
-
 import com.Booking_care.domain.dto.BillDetailDTO.ReqBillDetailDTO;
-import com.Booking_care.domain.enums.BillStatusEnum;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -21,7 +19,6 @@ public class ReqBillDTO {
     @NotNull(message = "PatientId không được để trống")
     private Long patientId;
 
-    @NotNull(message = "MedicalRecordId không được để trống")
     private Long medicalRecordId;
 
     @NotNull(message = "SupportId không được để trống")
