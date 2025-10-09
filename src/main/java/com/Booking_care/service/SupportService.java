@@ -1,9 +1,7 @@
 package com.Booking_care.service;
 
-import java.time.Instant;
-import java.time.YearMonth;
-import java.time.ZoneOffset;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
@@ -13,13 +11,12 @@ import org.springframework.stereotype.Service;
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Support;
-import com.Booking_care.domain.dto.DoctorDTO.DoctorCriteriaDTO;
 import com.Booking_care.domain.dto.SupportDTO.ResSupportDTO;
 import com.Booking_care.domain.dto.SupportDTO.SupportCriteriaDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.SupportRepository;
-import com.Booking_care.service.specification.DoctorSpecs;
 import com.Booking_care.service.specification.SupportSpecs;
+import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 
 @Service
 public class SupportService {
@@ -33,6 +30,16 @@ public class SupportService {
         this.supportRepository = supportRepository;
         this.accountService = accountService;
         this.clinicService = clinicService;
+    }
+
+    public ResClinicDTO getClinicBySupportId(Long supportId) {
+        Long clinicId = supportRepository.findClinicIdBySupportId(supportId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Không tìm thấy clinic cho supportId=" + supportId));
+
+        ResClinicDTO res = this.clinicService.convertToClinicDTO(this.clinicService.fetchClinicById(clinicId));
+
+        return res;
     }
 
     public boolean isAccountExits(long id) {

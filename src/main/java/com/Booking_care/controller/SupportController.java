@@ -22,7 +22,7 @@ import com.Booking_care.service.ClinicService;
 import com.Booking_care.service.SupportService;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
-
+import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 import jakarta.validation.Valid;
 
 @RestController
@@ -37,6 +37,11 @@ public class SupportController {
         this.supportService = supportService;
         this.clinicService = clinicService;
         this.accountProfile = accountProfile;
+    }
+
+    @GetMapping("/{supportId}/clinic")
+    public ResponseEntity<ResClinicDTO> getClinicBySupportId(@PathVariable Long supportId) {
+        return ResponseEntity.ok(supportService.getClinicBySupportId(supportId));
     }
 
     @GetMapping
