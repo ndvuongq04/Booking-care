@@ -81,6 +81,7 @@ public class SupportService {
                 currentSupport.setClinic(clinic != null ? clinic : null);
             }
 
+            currentSupport.setIsActive(support.getIsActive());
             currentSupport = this.supportRepository.save(currentSupport);
         }
         return currentSupport;
