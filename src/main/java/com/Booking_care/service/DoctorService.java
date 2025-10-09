@@ -96,6 +96,7 @@ public class DoctorService {
             currentDoctor.setCost(doctor.getCost());
             currentDoctor.setDegree(doctor.getDegree());
             currentDoctor.setDescription(doctor.getDescription());
+            currentDoctor.setIsActive(doctor.getIsActive());
 
             if (doctor.getClinic() != null) {
                 Clinic clinic = this.clinicService.fetchClinicById(doctor.getClinic().getId());

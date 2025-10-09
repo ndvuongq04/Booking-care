@@ -42,4 +42,6 @@ public class UpdateDoctorDTO {
     private Specialty specialty;
 
     private String description;
+    private Boolean isActive;
+
 }
