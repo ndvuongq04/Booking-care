@@ -75,8 +75,7 @@ public class DoctorService {
         }
 
         if (doctor.getSpecialty() != null) {
-            dto.setSpecialtyName(doctor.getSpecialty().getName());
-            dto.setSpecialtyDescription(doctor.getSpecialty().getDescription());
+            dto.setSpecialtyDTO(this.specialtyService.convertToResDTO(doctor.getSpecialty()));
         }
 
         return dto;

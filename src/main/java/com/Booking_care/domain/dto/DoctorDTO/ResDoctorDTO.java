@@ -5,7 +5,7 @@ import java.time.Instant;
 
 import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
 import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
-
+import com.Booking_care.domain.dto.SpecialtyDTO.ResSpecialtyDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,6 +25,5 @@ public class ResDoctorDTO {
     private String description;
     private ResAccountDTO account;
     private ResClinicDTO clinic;
-    private String specialtyName;
-    private String specialtyDescription;
+    private ResSpecialtyDTO specialtyDTO;
 }

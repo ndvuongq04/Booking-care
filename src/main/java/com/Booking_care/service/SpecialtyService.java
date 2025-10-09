@@ -10,7 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-
+import com.Booking_care.domain.dto.SpecialtyDTO.ResSpecialtyDTO;
 import com.Booking_care.domain.Specialty;
 import com.Booking_care.domain.dto.ResCloudinaryDTO;
 import com.Booking_care.domain.dto.SpecialtyDTO.ReqSpecialtyDTO;
@@ -159,4 +159,17 @@ public class SpecialtyService {
 
         return res;
     }
+
+    public ResSpecialtyDTO convertToResDTO(Specialty specialty) {
+        specialty = this.fetchSpecialtyById(specialty.getId());
+        return new ResSpecialtyDTO(
+                specialty.getId(),
+                specialty.getName(),
+                specialty.getDescription(),
+                specialty.getImage(),
+                specialty.getIsActive(),
+                specialty.getCreateAt(),
+                specialty.getUpdateAt());
+    }
+
 }
