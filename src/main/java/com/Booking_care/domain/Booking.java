@@ -13,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -36,6 +37,7 @@ public class Booking {
     private String description;
     private Instant createAt;
     private Instant updateAt;
+    private Boolean checkFeedback = false;
 
     @Enumerated(EnumType.STRING)
     private BookingStatusEnum status;
@@ -59,6 +61,10 @@ public class Booking {
     @ManyToOne
     @JoinColumn(name = "time_id")
     private Time time;
+
+    // Feedback
+    @OneToOne(mappedBy = "booking")
+    private Feedback feedback;
 
     @PrePersist
     public void handleBeforeCreate() {

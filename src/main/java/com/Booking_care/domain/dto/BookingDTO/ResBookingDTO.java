@@ -27,6 +27,7 @@ public class ResBookingDTO {
     private ResPatientDTO patient;
     private ResClinicDTO clinic;
     private ResTimeDTO time;
+    private Boolean checkFeedback;
 
     @Getter
     @Setter

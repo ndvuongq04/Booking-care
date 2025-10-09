@@ -248,6 +248,7 @@ public class BookingService {
         dto.setCreateAt(booking.getCreateAt());
         dto.setUpdateAt(booking.getUpdateAt());
         dto.setStatus(booking.getStatus());
+        dto.setCheckFeedback(booking.getCheckFeedback());
 
         if (booking.getDoctor() != null) {
             dto.setDoctor(this.doctorService.convertToDoctorDTO(booking.getDoctor()));

@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -33,6 +34,11 @@ public class Feedback {
     private String description;
     private Instant createAt;
     private Instant updateAt;
+
+    // Booking
+    @OneToOne
+    @JoinColumn(name = "booking_id", nullable = true)
+    private Booking booking;
 
     // Doctor
     @ManyToOne

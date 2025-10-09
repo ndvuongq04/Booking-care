@@ -20,4 +20,7 @@ public class ReqFeedbackDTO {
 
     @NotNull
     private Long patientId;
+
+    private Long bookingId;
+
 }

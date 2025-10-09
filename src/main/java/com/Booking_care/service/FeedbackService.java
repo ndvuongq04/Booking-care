@@ -8,12 +8,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.Booking_care.domain.Booking;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Feedback;
 import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.dto.ResFeedbackDTO;
 import com.Booking_care.domain.dto.FeedbackDTO.ReqFeedbackDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
+import com.Booking_care.repository.BookingRepository;
 import com.Booking_care.repository.FeedbackRepository;
 
 @Service
@@ -21,13 +24,16 @@ public class FeedbackService {
     private final FeedbackRepository feedbackRepository;
     private final DoctorService doctorService;
     private final PatientService patientService;
+    private final BookingService bookingService;
+    private final BookingRepository bookingRepository;
 
-    public FeedbackService(FeedbackRepository feedbackRepository,
-            DoctorService doctorService,
-            PatientService patientService) {
+    public FeedbackService(FeedbackRepository feedbackRepository, DoctorService doctorService,
+            PatientService patientService, BookingService bookingService, BookingRepository bookingRepository) {
         this.feedbackRepository = feedbackRepository;
         this.doctorService = doctorService;
         this.patientService = patientService;
+        this.bookingService = bookingService;
+        this.bookingRepository = bookingRepository;
     }
 
     public Doctor fetchDoctorById(long id) {
@@ -78,7 +84,16 @@ public class FeedbackService {
         fb.setDoctor(this.doctorService.fetchDoctorById(req.getDoctorId()));
         fb.setPatient(this.patientService.fetchPatientById(req.getDoctorId()));
 
-        return this.feedbackRepository.save(fb);
+        Booking bk = this.bookingService.getBookingById(req.getBookingId());
+        fb.setBooking(bk);
+
+        Feedback fed = this.feedbackRepository.save(fb);
+
+        bk.setCheckFeedback(true);
+
+        this.bookingRepository.save(bk);
+
+        return fed;
     }
 
     public Feedback handleUpdateFeedback(Feedback feedback) {
