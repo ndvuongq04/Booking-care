@@ -25,5 +25,5 @@ public class ResDoctorDTO {
     private String description;
     private ResAccountDTO account;
     private ResClinicDTO clinic;
-    private ResSpecialtyDTO specialtyDTO;
+    private ResSpecialtyDTO specialty;
 }
