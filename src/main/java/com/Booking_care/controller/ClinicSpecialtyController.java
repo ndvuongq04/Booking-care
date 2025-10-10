@@ -3,17 +3,13 @@ package com.Booking_care.controller;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.Booking_care.domain.Clinic;
-import com.Booking_care.domain.ClinicSpecialty;
-import com.Booking_care.domain.Specialty;
+import com.Booking_care.domain.dto.ClinicSpecialtyDTO.ReqClinicSpecialtyDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.ClinicSpecialtyService;
 import com.Booking_care.util.annotation.ApiMessage;
@@ -31,65 +27,29 @@ public class ClinicSpecialtyController {
     }
 
     @PostMapping("/clinicSpecialties")
-    @ApiMessage("Create new clinicSpecialty")
-    public ResponseEntity<ClinicSpecialty> createNewClinicSpecialty(@Valid @RequestBody ClinicSpecialty req)
+    @ApiMessage("Add list of Specialty for the clinic")
+    public ResponseEntity<Void> addListSpecialtyForClinic(@Valid @RequestBody ReqClinicSpecialtyDTO req)
             throws IdInvalidException {
-
-        this.checkException(req.getClinic(), req.getSpecialty());
-        boolean isClinicSpecialtyExits = this.clinicSpecialtyService.isClinicSpecialtyExits(req.getClinic(),
-                req.getSpecialty());
-        if (isClinicSpecialtyExits) {
-            throw new IdInvalidException("Clinic đã tồn tại specialty này ");
-        }
-
+        this.clinicSpecialtyService.handleAddSpecialtiesForClinic(req);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(this.clinicSpecialtyService.handleCreateClinicSpecialty(req));
-    }
-
-    @GetMapping("/clinicSpecialties/{id}")
-    @ApiMessage("Fetch clinicSpecialty by id")
-    public ResponseEntity<ClinicSpecialty> getClinicSpecialtyByClinicId(@PathVariable("id") long id)
-            throws IdInvalidException {
-        ClinicSpecialty cS = this.clinicSpecialtyService.fetchClinicSpecialtyById(id);
-
-        if (cS == null) {
-            throw new IdInvalidException("ClinicSpecialty với id " + id + " không tồn tại");
-        }
-
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(cS);
-    }
-
-    @DeleteMapping("/clinicSpecialties/{id}")
-    @ApiMessage("Delete clinicSpecialty by id")
-    public ResponseEntity<Void> deleteClinicSpecialtyByClinicId(@PathVariable("id") long id)
-            throws IdInvalidException {
-        ClinicSpecialty cS = this.clinicSpecialtyService.fetchClinicSpecialtyById(id);
-
-        if (cS == null) {
-            throw new IdInvalidException("ClinicSpecialty với id " + id + " không tồn tại");
-        }
-
-        this.clinicSpecialtyService.deleteById(id);
-        return ResponseEntity.status(HttpStatus.OK)
                 .body(null);
     }
 
-    @PutMapping("/clinicSpecialties")
-    @ApiMessage("Update a clinicSpecialty")
-    public ResponseEntity<ClinicSpecialty> updateClinicSpecialty(@Valid @RequestBody ClinicSpecialty req)
+    @GetMapping("/clinicSpecialties/clinic/{clinicId}")
+    @ApiMessage("Fetch specialties for clinicId")
+    public ResponseEntity<ResultPaginationDTO> getClinicSpecialtyByClinicId(@PathVariable("clinicId") long clinicId,
+            Pageable pageable)
             throws IdInvalidException {
+        return ResponseEntity.ok(this.clinicSpecialtyService.fetchClinicSpecialtyByClinicId(clinicId, pageable));
+    }
 
-        ClinicSpecialty cS = this.clinicSpecialtyService.fetchClinicSpecialtyById(req.getId());
-        if (cS == null) {
-            throw new IdInvalidException("ClinicSpecialty với id " + req.getId() + " không tồn tại");
-        }
-        if (this.clinicSpecialtyService.existsByClinicAndSpecialty(req.getClinic(), req.getSpecialty(), req.getId())) {
-            throw new IdInvalidException("Clinic và Specialty này đã tồn tại");
-        }
-        this.checkException(req.getClinic(), req.getSpecialty());
-
-        return ResponseEntity.ok(this.clinicSpecialtyService.handleUpdateClinicSpecialty(req));
+    @GetMapping("/clinicSpecialties/specialty/{specialtyId}")
+    @ApiMessage("Fetch clinics for specialtyId")
+    public ResponseEntity<ResultPaginationDTO> getClinicsBySpecialtyId(
+            @PathVariable("specialtyId") long specialtyId,
+            Pageable pageable)
+            throws IdInvalidException {
+        return ResponseEntity.ok(this.clinicSpecialtyService.fetchClinicSpecialtyBySpecialtyId(specialtyId, pageable));
     }
 
     @GetMapping("/clinicSpecialties")
@@ -98,18 +58,6 @@ public class ClinicSpecialtyController {
             Pageable pageable) {
         ResultPaginationDTO result = this.clinicSpecialtyService.fetchAllClinicSpecialty(pageable);
         return ResponseEntity.ok().body(result);
-    }
-
-    private void checkException(Clinic c, Specialty s) throws IdInvalidException {
-        boolean isClinicExits = this.clinicSpecialtyService.isClinicExits(c.getId());
-        if (!isClinicExits) {
-            throw new IdInvalidException("Clinic với id : " + c.getId() + " không tồn tại");
-        }
-
-        boolean isSpecialtyExits = this.clinicSpecialtyService.isSpecialtyExits(s.getId());
-        if (!isSpecialtyExits) {
-            throw new IdInvalidException("Specialty với id : " + s.getId() + " không tồn tại");
-        }
     }
 
 }

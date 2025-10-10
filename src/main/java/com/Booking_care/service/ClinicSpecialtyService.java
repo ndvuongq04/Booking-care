@@ -2,30 +2,35 @@ package com.Booking_care.service;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
+import com.Booking_care.domain.dto.SpecialtyDTO.ResSpecialtyDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import com.Booking_care.domain.Account;
+import com.Booking_care.util.error.IdInvalidException;
 import com.Booking_care.domain.Clinic;
+import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 import com.Booking_care.domain.ClinicSpecialty;
 import com.Booking_care.domain.Specialty;
+import com.Booking_care.domain.dto.ClinicSpecialtyDTO.ReqClinicSpecialtyDTO;
+import com.Booking_care.domain.dto.ClinicSpecialtyDTO.ResClinicSpecialtyForClinicDTO;
+import com.Booking_care.domain.dto.ClinicSpecialtyDTO.ResClinicSpecialtyForSpecialtyDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.ClinicSpecialtyRepository;
+import com.Booking_care.repository.SpecialtyRepository;
 
 @Service
 public class ClinicSpecialtyService {
     private final ClinicSpecialtyRepository clinicSpecialtyRepository;
     private final ClinicService clinicService;
     private final SpecialtyService specialtyService;
+    private final SpecialtyRepository specialtyRepository;
 
-    public ClinicSpecialtyService(ClinicSpecialtyRepository clinicSpecialtyRepository,
-            ClinicService clinicService,
-            SpecialtyService specialtyService) {
+    public ClinicSpecialtyService(ClinicSpecialtyRepository clinicSpecialtyRepository, ClinicService clinicService,
+            SpecialtyService specialtyService, SpecialtyRepository specialtyRepository) {
         this.clinicSpecialtyRepository = clinicSpecialtyRepository;
         this.clinicService = clinicService;
         this.specialtyService = specialtyService;
+        this.specialtyRepository = specialtyRepository;
     }
 
     public ClinicSpecialty handleCreateClinicSpecialty(ClinicSpecialty cs) {
@@ -66,24 +71,101 @@ public class ClinicSpecialtyService {
         return this.clinicSpecialtyRepository.existsByClinicAndSpecialty(c, s);
     }
 
-    public ClinicSpecialty fetchClinicSpecialtyById(long id) {
-        return this.clinicSpecialtyRepository.findById(id).orElse(null);
+    public ResultPaginationDTO fetchClinicSpecialtyByClinicId(long clinicId, Pageable pageable)
+            throws IdInvalidException {
+        Clinic clinic = this.clinicService.fetchClinicById(clinicId);
+        if (clinic == null) {
+            throw new IdInvalidException("ClinicId không tồn tại");
+        }
+        Page<ClinicSpecialty> page = this.clinicSpecialtyRepository.findByClinic_Id(clinicId, pageable);
+
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        ResClinicSpecialtyForClinicDTO cs = new ResClinicSpecialtyForClinicDTO();
+        cs.setClinicId(clinic.getId());
+        cs.setClinicName(clinic.getName());
+
+        List<ResSpecialtyDTO> listSpec = page.getContent().stream()
+                .map(spec -> this.specialtyService.convertToResDTO(spec.getSpecialty()))
+                .collect(Collectors.toList());
+
+        cs.setSpecialties(listSpec);
+
+        res.setMeta(meta);
+        res.setResult(cs);
+
+        return res;
+    }
+
+    public ResultPaginationDTO fetchClinicSpecialtyBySpecialtyId(long specialtyId, Pageable pageable)
+            throws IdInvalidException {
+        Specialty specialty = this.specialtyService.fetchSpecialtyById(specialtyId);
+        if (specialty == null) {
+            throw new IdInvalidException("SpecialtyId không tồn tại");
+        }
+        Page<ClinicSpecialty> page = this.clinicSpecialtyRepository.findBySpecialty_Id(specialtyId, pageable);
+
+        ResultPaginationDTO res = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        // từ fe
+        meta.setPage(pageable.getPageNumber() + 1);
+        meta.setPageSize(pageable.getPageSize());
+
+        // từ db
+        meta.setPages(page.getTotalPages());
+        meta.setTotals(page.getTotalElements());
+
+        ResClinicSpecialtyForSpecialtyDTO cs = new ResClinicSpecialtyForSpecialtyDTO();
+        cs.setSpecialtyId(specialty.getId());
+        cs.setSpecialtyName(specialty.getName());
+
+        List<ResClinicDTO> listSpec = page.getContent().stream()
+                .map(spec -> this.clinicService.convertToClinicDTO(spec.getClinic()))
+                .collect(Collectors.toList());
+
+        cs.setSpecialties(listSpec);
+
+        res.setMeta(meta);
+        res.setResult(cs);
+
+        return res;
     }
 
     public void deleteById(long id) {
         this.clinicSpecialtyRepository.deleteById(id);
     }
 
-    public ClinicSpecialty handleUpdateClinicSpecialty(ClinicSpecialty cS) {
-        ClinicSpecialty clinicSpecialty = this.fetchClinicSpecialtyById(cS.getId());
-
-        clinicSpecialty.setClinic(cS.getClinic());
-        clinicSpecialty.setSpecialty(cS.getSpecialty());
-
-        return this.clinicSpecialtyRepository.save(clinicSpecialty);
-    }
-
     public boolean existsByClinicAndSpecialty(Clinic c, Specialty s, long id) {
         return this.clinicSpecialtyRepository.existsByClinicAndSpecialtyAndIdNot(c, s, id);
+    }
+
+    public void handleAddSpecialtiesForClinic(ReqClinicSpecialtyDTO req) throws IdInvalidException {
+        Clinic clinic = this.clinicService.fetchClinicById(req.getClinicId());
+        if (clinic == null) {
+            throw new IdInvalidException("ClinicId không tồn tại");
+        }
+
+        List<Specialty> specialties = this.specialtyRepository.findAllById(req.getSpecialties());
+
+        for (Specialty specialty : specialties) {
+            boolean exist = this.clinicSpecialtyRepository.existsByClinicAndSpecialty(clinic, specialty);
+            if (!exist) {
+                ClinicSpecialty cs = new ClinicSpecialty();
+                cs.setClinic(clinic);
+                cs.setSpecialty(specialty);
+                this.clinicSpecialtyRepository.save(cs);
+            }
+        }
+
     }
 }

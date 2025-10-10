@@ -4,8 +4,6 @@ import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -170,6 +168,15 @@ public class SpecialtyService {
                 specialty.getIsActive(),
                 specialty.getCreateAt(),
                 specialty.getUpdateAt());
+    }
+
+    public ResSpecialtyDTO getSpecialtyById(Long id) {
+        Specialty specialty = specialtyRepository.findById(id).orElse(null);
+        ResSpecialtyDTO res = new ResSpecialtyDTO();
+        if (specialty != null) {
+            res = this.convertToResDTO(specialty);
+        }
+        return res;
     }
 
 }
