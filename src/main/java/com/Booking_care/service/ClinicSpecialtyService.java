@@ -6,6 +6,8 @@ import com.Booking_care.domain.dto.SpecialtyDTO.ResSpecialtyDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.Booking_care.util.error.IdInvalidException;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
@@ -167,5 +169,10 @@ public class ClinicSpecialtyService {
             }
         }
 
+    }
+
+    @Transactional
+    public void handleDeleteClinicSpecialty(long clinicId, long specialtyId) {
+        this.clinicSpecialtyRepository.deleteByClinic_IdAndSpecialty_Id(clinicId, specialtyId);
     }
 }

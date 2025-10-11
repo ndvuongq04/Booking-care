@@ -16,4 +16,6 @@ public interface ClinicSpecialtyRepository extends JpaRepository<ClinicSpecialty
 
     Page<ClinicSpecialty> findBySpecialty_Id(Long id, Pageable pageable);
 
+    void deleteByClinic_IdAndSpecialty_Id(Long clinicId, Long specialtyId);
+
 }

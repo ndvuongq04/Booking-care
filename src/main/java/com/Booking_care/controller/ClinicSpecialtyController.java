@@ -3,11 +3,13 @@ package com.Booking_care.controller;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.Booking_care.domain.dto.ClinicSpecialtyDTO.ReqClinicSpecialtyDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
@@ -58,6 +60,16 @@ public class ClinicSpecialtyController {
             Pageable pageable) {
         ResultPaginationDTO result = this.clinicSpecialtyService.fetchAllClinicSpecialty(pageable);
         return ResponseEntity.ok().body(result);
+    }
+
+    @DeleteMapping("/clinicSpecialties/delete")
+    @ApiMessage("Fetch all clinicSpecialty")
+    public ResponseEntity<Void> deleteClinicSpecialty(
+            Pageable pageable,
+            @RequestParam("clinicId") long clinicId,
+            @RequestParam("specialtyId") long specialtyId) {
+        this.clinicSpecialtyService.handleDeleteClinicSpecialty(clinicId, specialtyId);
+        return ResponseEntity.ok(null);
     }
 
 }
