@@ -19,6 +19,10 @@ public class StatisticService {
         return v == null ? BigDecimal.ZERO : v;
     }
 
+    private static long n0(Long v) {
+        return v == null ? 0L : v;
+    }
+
     public StatisticDTO revenueDaily(LocalDate start, LocalDate end, String status) {
         // [start 00:00:00, end 23:59:59.999999999]
         LocalDateTime s = start.atStartOfDay();
@@ -62,6 +66,58 @@ public class StatisticService {
                 nz(sum.getTotal()),
                 sum.getCount() == null ? 0L : sum.getCount(),
                 nz(sum.getAvgOrderValue()));
+        return new StatisticDTO(points, summary);
+    }
+
+    // Booking success
+
+    public StatisticDTO successDaily(LocalDate start, LocalDate end, String status,
+            Long doctorId, Long clinicId) {
+
+        var points = repo.bookingSuccessDaily(start, end, status, doctorId, clinicId)
+                .stream().map(r -> new StatisticPointDTO(r.getLabel(), nz(r.getTotal()))).toList();
+
+        var sum = repo.bookingSuccessSummary(start, end, status, doctorId, clinicId);
+        var summary = new StatisticSummaryDTO(
+                nz(sum.getTotal()), // tổng số booking (dạng BigDecimal)
+                n0(sum.getCount()), // số booking
+                BigDecimal.ZERO // avgOrderValue không áp dụng cho count
+        );
+        return new StatisticDTO(points, summary);
+    }
+
+    public StatisticDTO successMonthly(int year, String status, Long doctorId, Long clinicId) {
+
+        var points = repo.bookingSuccessMonthly(year, status, doctorId, clinicId)
+                .stream().map(r -> new StatisticPointDTO(r.getLabel(), nz(r.getTotal()))).toList();
+
+        // summary cả năm
+        LocalDate s = LocalDate.of(year, 1, 1);
+        LocalDate e = LocalDate.of(year, 12, 31);
+        var sum = repo.bookingSuccessSummary(s, e, status, doctorId, clinicId);
+
+        var summary = new StatisticSummaryDTO(
+                nz(sum.getTotal()),
+                n0(sum.getCount()),
+                BigDecimal.ZERO);
+        return new StatisticDTO(points, summary);
+    }
+
+    public StatisticDTO successYearly(int startYear, int endYear, String status,
+            Long doctorId, Long clinicId) {
+
+        var points = repo.bookingSuccessYearly(startYear, endYear, status, doctorId, clinicId)
+                .stream().map(r -> new StatisticPointDTO(r.getLabel(), nz(r.getTotal()))).toList();
+
+        // summary giai đoạn
+        LocalDate s = LocalDate.of(startYear, 1, 1);
+        LocalDate e = LocalDate.of(endYear, 12, 31);
+        var sum = repo.bookingSuccessSummary(s, e, status, doctorId, clinicId);
+
+        var summary = new StatisticSummaryDTO(
+                nz(sum.getTotal()),
+                n0(sum.getCount()),
+                BigDecimal.ZERO);
         return new StatisticDTO(points, summary);
     }
 }

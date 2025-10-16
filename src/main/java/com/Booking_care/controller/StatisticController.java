@@ -19,6 +19,8 @@ public class StatisticController {
         this.statisticService = statisticService;
     }
 
+    // PRICE
+    // DAILY
     @GetMapping("statistic/price/daily")
     @ApiMessage("Revenue daily")
     public StatisticDTO revenueDaily(
@@ -31,6 +33,7 @@ public class StatisticController {
         return statisticService.revenueDaily(start, end, status);
     }
 
+    // MONTHLY
     @GetMapping("statistic/price/monthly")
     @ApiMessage("Revenue monthly")
     public StatisticDTO revenueMonthly(
@@ -42,6 +45,7 @@ public class StatisticController {
         return statisticService.revenueMonthly(year, status);
     }
 
+    // YEARLY
     @GetMapping("statistic/price/yearly")
     @ApiMessage("Revenue yearly")
     public StatisticDTO revenueYearly(
@@ -57,6 +61,52 @@ public class StatisticController {
         return statisticService.revenueYearly(startYear, endYear, status);
     }
 
-    // thống kê lịch khám đã hoàn thành
+    // BOOKING SUCCESS
+    // DAILY
+    @GetMapping("statistic/bookingSuccess/daily")
+    @ApiMessage("bookingSuccess daily")
+    public StatisticDTO bookingSuccessDaily(
+            @RequestParam LocalDate start,
+            @RequestParam LocalDate end,
+            @RequestParam(required = false, defaultValue = "COMPLETED") String status,
+            @RequestParam(required = false) Long doctorId,
+            @RequestParam(required = false) Long clinicId) throws IdInvalidException {
+        if (start == null || end == null || end.isBefore(start)) {
+            throw new IdInvalidException("Tham số ngày không hợp lệ (end phải >= start)");
+        }
+        return statisticService.successDaily(start, end, status, doctorId, clinicId);
+    }
+
+    // MONTHLY
+    @GetMapping("statistic/bookingSuccess/monthly")
+    @ApiMessage("bookingSuccess monthly")
+    public StatisticDTO bookingSuccessMonthly(
+            @RequestParam int year,
+            @RequestParam(required = false, defaultValue = "COMPLETED") String status,
+            @RequestParam(required = false) Long doctorId,
+            @RequestParam(required = false) Long clinicId) throws IdInvalidException {
+        if (year < 2000 || year > 2100) {
+            throw new IdInvalidException("Năm không hợp lệ (2000–2100)");
+        }
+        return statisticService.successMonthly(year, status, doctorId, clinicId);
+    }
+
+    // YEARLY
+    @GetMapping("statistic/bookingSuccess/yearly")
+    @ApiMessage("bookingSuccess yearly")
+    public StatisticDTO bookingSuccessYearly(
+            @RequestParam int startYear,
+            @RequestParam int endYear,
+            @RequestParam(required = false, defaultValue = "COMPLETED") String status,
+            @RequestParam(required = false) Long doctorId,
+            @RequestParam(required = false) Long clinicId) throws IdInvalidException {
+        if (endYear < startYear) {
+            throw new IdInvalidException("Tham số năm không hợp lệ (endYear phải >= startYear)");
+        }
+        if (startYear < 2000 || endYear > 2100) {
+            throw new IdInvalidException("Khoảng năm không hợp lệ (2000–2100)");
+        }
+        return statisticService.successYearly(startYear, endYear, status, doctorId, clinicId);
+    }
 
 }
