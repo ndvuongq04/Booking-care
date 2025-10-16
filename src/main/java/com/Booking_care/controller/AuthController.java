@@ -117,6 +117,7 @@ public class AuthController {
             ResLoginDTO.UserLogin userLogin = new ResLoginDTO.UserLogin(currentAcc.getId(),
                     currentAcc.getName(),
                     currentAcc.getEmail(),
+                    currentAcc.getAvatar(),
                     currentAcc.getRole().getName().toUpperCase(),
                     actorType,
                     actorId);
@@ -219,6 +220,7 @@ public class AuthController {
                     currentAccountDB.getId(),
                     currentAccountDB.getEmail(),
                     currentAccountDB.getName(),
+                    currentAccount.getAvatar(),
                     currentAccountDB.getRole().getName().toString().toUpperCase(),
                     actorType, actorId);
             res.setUserLogin(userLogin);
