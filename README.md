@@ -218,9 +218,7 @@ mvn spring-boot:run
 
 ### Trạng Thái Thanh Toán
 
-- `UNPAID` - Chưa thanh toán
 - `PAID` - Đã thanh toán
-- `CANCELLED` - Đã hủy
 
 ## ⭐ API Quản Lý Phản Hồi (/api/v1/feedbacks)
 
