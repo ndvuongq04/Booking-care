@@ -11,7 +11,16 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "clinic_specialty"
 // , uniqueConstraints = @UniqueConstraint(name = "uk_clinic_specialty",
@@ -26,24 +35,17 @@ public class ClinicSpecialty {
     // Specialty
     @ManyToOne
     @JoinColumn(name = "specialty_id")
+    @NotNull(message = "Specialty không được để trống")
     private Specialty specialty;
 
     // Clinic
     @ManyToOne
     @JoinColumn(name = "clinic_id")
+    @NotNull(message = "Clinic không được để trống")
     private Clinic clinic;
 
     private Instant createAt;
     private Instant updateAt;
-
-    public ClinicSpecialty(long id, Specialty specialty, Clinic clinic) {
-        this.id = id;
-        this.specialty = specialty;
-        this.clinic = clinic;
-    }
-
-    public ClinicSpecialty() {
-    }
 
     @PrePersist
     public void handleBeforeCreate() {
@@ -53,46 +55,6 @@ public class ClinicSpecialty {
     @PreUpdate
     public void handleBeforeUpdate() {
         this.updateAt = Instant.now();
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public Specialty getSpecialty() {
-        return specialty;
-    }
-
-    public void setSpecialty(Specialty specialty) {
-        this.specialty = specialty;
-    }
-
-    public Clinic getClinic() {
-        return clinic;
-    }
-
-    public void setClinic(Clinic clinic) {
-        this.clinic = clinic;
-    }
-
-    public Instant getCreateAt() {
-        return createAt;
-    }
-
-    public void setCreateAt(Instant createAt) {
-        this.createAt = createAt;
-    }
-
-    public Instant getUpdateAt() {
-        return updateAt;
-    }
-
-    public void setUpdateAt(Instant updateAt) {
-        this.updateAt = updateAt;
     }
 
 }

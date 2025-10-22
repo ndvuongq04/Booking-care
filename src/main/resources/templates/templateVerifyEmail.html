@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Xác thực tài khoản</title>
+</head>
+
+<body style="margin:0; padding:0; background-color:#f4f4f9; font-family:Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f9; padding:20px 0;">
+        <tr>
+            <td align="center">
+                <!-- Container -->
+                <table width="600" cellpadding="0" cellspacing="0"
+                    style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="background-color:#1E88E5; padding:20px;">
+                            <h1 style="margin:0; color:#ffffff; font-size:24px;">BookingCare</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding:30px; color:#333333; font-size:16px; line-height:1.5;">
+                            <p style="margin:0 0 20px;">Xin chào <strong th:text="${name}">Người dùng</strong>,</p>
+                            <p style="margin:0 0 20px;">
+                                Cảm ơn bạn đã đăng ký tài khoản tại <strong>BookingCare</strong>.
+                                Vui lòng sử dụng mã xác thực bên dưới để hoàn tất quá trình đăng ký:
+                            </p>
+
+                            <!-- OTP Box -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+                                <tr>
+                                    <td align="center"
+                                        style="padding:15px; background-color:#e3f2fd; border-radius:4px;">
+                                        <span
+                                            style="font-size:22px; letter-spacing:4px; font-weight:bold; color:#1E88E5;"
+                                            th:text="${value.code}">1234</span>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin:0 0 20px; font-size:14px; color:#555555;">
+                                Mã xác thực này sẽ hết hạn sau "<strong>60 giây
+                                </strong>.
+                                Nếu bạn không yêu cầu đăng ký tài khoản, vui lòng bỏ qua email này.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center"
+                            style="background-color:#f9f9f9; padding:15px; font-size:12px; color:#999999;">
+                            © 2025 BookingCare. Mọi quyền được bảo lưu.
+                        </td>
+                    </tr>
+                </table>
+                <!-- End Container -->
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Thông báo huỷ lịch khám</title>
+</head>
+
+<body style="margin:0; padding:0; background-color:#f4f6fb; font-family:Arial, Helvetica, sans-serif;">
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6fb; padding:20px 0;">
+        <tr>
+            <td align="center">
+                <!-- Container -->
+                <table width="600" cellpadding="0" cellspacing="0"
+                    style="background-color:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+
+                    <!-- Header -->
+                    <tr>
+                        <td
+                            style="background-color:#d32f2f; padding:20px; text-align:center; color:#ffffff; font-size:22px; font-weight:bold; letter-spacing:0.5px;">
+                            THÔNG BÁO HUỶ LỊCH KHÁM
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding:30px; color:#333333; font-size:15px; line-height:1.6;">
+                            <p style="margin:0 0 10px 0;">Xin chào
+                                <strong
+                                    th:text="${value.patient.account.name != null ? value.patient.account.name : value.patient.account.email}">
+                                    Nguyễn Văn A
+                                </strong>,
+                            </p>
+                            <p style="margin:0 0 20px 0; color:#d32f2f; font-weight:bold;">
+                                Rất tiếc, lịch khám của bạn đã bị huỷ. Thông tin chi tiết như sau:
+                            </p>
+
+                            <table width="100%" cellpadding="10" cellspacing="0" border="1"
+                                style="border-collapse:collapse; border:1px solid #ddd; margin-top:15px; font-size:14px;">
+                                <tr style="background-color:#fdecea; font-weight:bold; color:#d32f2f;">
+                                    <td style="width:30%;">Thông tin</td>
+                                    <td>Chi tiết</td>
+                                </tr>
+                                <tr>
+                                    <td>Mã đặt lịch</td>
+                                    <td th:text="${value.id}">12345</td>
+                                </tr>
+                                <tr style="background-color:#fafafa;">
+                                    <td>Bệnh nhân</td>
+                                    <td
+                                        th:text="${value.patient.account.name != null ? value.patient.account.name : value.patient.account.email}">
+                                        Nguyễn Văn A
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Bác sĩ</td>
+                                    <td
+                                        th:text="${value.doctor.account.name != null ? value.doctor.account.name : value.doctor.account.email}">
+                                        BS. Trần Văn B
+                                    </td>
+                                </tr>
+                                <tr style="background-color:#fafafa;">
+                                    <td>Phòng khám</td>
+                                    <td th:text="${value.clinic.name}">Phòng khám Đa khoa ABC</td>
+                                </tr>
+                                <tr>
+                                    <td>Ngày khám</td>
+                                    <td th:text="${#temporals.format(value.appointmentDate, 'dd/MM/yyyy')}">27/09/2025
+                                    </td>
+                                </tr>
+                                <tr style="background-color:#fafafa;">
+                                    <td>Giờ khám</td>
+                                    <td>
+                                        <span th:text="${value.time.start}">08:30</span> -
+                                        <span th:text="${value.time.end}">09:00</span>
+                                    </td>
+                                </tr>
+                                <tr style="background-color:#fafafa;">
+                                    <td>Trạng thái</td>
+                                    <td style="color:#d32f2f; font-weight:bold;" th:text="${value.status}">CANCELLED
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin-top:25px; font-size:15px;">🙏 Chúng tôi rất xin lỗi vì sự bất tiện này.</p>
+                            <p style="margin-top:5px; font-size:15px;">Bạn có thể <strong>đặt lịch khám mới</strong>
+                                trên hệ thống khi thuận tiện.</p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td
+                            style="background-color:#f0f4fa; padding:15px; text-align:center; font-size:12px; color:#555;">
+                            © 2025 Booking Care. Mọi quyền được bảo lưu.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+</body>
+
+</html>
