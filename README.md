@@ -237,7 +237,6 @@ mvn spring-boot:run
 |--------|----------|-------|----------------|
 | GET | `/statistics/revenue` | Thống kê doanh thu | Admin Only |
 | GET | `/statistics/bookings` | Thống kê lịch hẹn | Admin Only |
-| GET | `/statistics/patients` | Thống kê bệnh nhân | Admin Only |
 
 ## 🏗️ Cấu Trúc Dự Án
 
