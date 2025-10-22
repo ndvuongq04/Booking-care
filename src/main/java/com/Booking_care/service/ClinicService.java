@@ -10,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import com.Booking_care.domain.Address;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.dto.ResCloudinaryDTO;
@@ -20,8 +19,9 @@ import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.ClinicRepository;
 import com.Booking_care.service.specification.ClinicSpecs;
-import com.Booking_care.service.specification.DoctorSpecs;
+import com.Booking_care.util.error.IdInvalidException;
 import com.Booking_care.util.error.StorageException;
+import com.Booking_care.mapper.clinic.ClinicMapper;
 
 @Service
 public class ClinicService {
@@ -43,28 +43,40 @@ public class ClinicService {
     }
 
     public Clinic handleCreateClinic(ReqClinicDTO c) {
+        // Validation: check name exists
+        if (this.clinicRepository.existsByName(c.getName())) {
+            throw new IdInvalidException(
+                    "Name " + c.getName() + " đã tồn tại, Vui lòng sử dụng name khác.");
+        }
 
-        Clinic clinic = new Clinic();
+        // Validation: check address exists (addressService will throw if not found)
+        Address address = this.addressService.fetchAddressById(c.getAddressId());
 
-        // if (c.getFile() != null && !c.getFile().isEmpty()) {
-        // ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(c.getFile(),
-        // folder,
-        // c.getName());
-        // clinic.setImage(resImg.getUrl());
+        try {
+            Clinic clinic = new Clinic();
 
-        // }
+            // if (c.getFile() != null && !c.getFile().isEmpty()) {
+            // ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(c.getFile(),
+            // folder,
+            // c.getName());
+            // clinic.setImage(resImg.getUrl());
 
-        clinic.setName(c.getName());
-        clinic.setDescription(c.getDescription());
-        clinic.setPosition(c.getPosition());
-        clinic.setPhoneNumber(c.getPhoneNumber());
+            // }
 
-        //
-        Address a = new Address();
-        a.setId(c.getAddressId());
-        clinic.setAddress(a);
+            clinic.setName(c.getName());
+            clinic.setDescription(c.getDescription());
+            clinic.setPosition(c.getPosition());
+            clinic.setPhoneNumber(c.getPhoneNumber());
 
-        return this.clinicRepository.save(clinic);
+            //
+            Address a = new Address();
+            a.setId(c.getAddressId());
+            clinic.setAddress(a);
+
+            return this.clinicRepository.save(clinic);
+        } catch (Exception e) {
+            throw new StorageException("Không thể tạo clinic: " + e.getMessage(), e);
+        }
     }
 
     public ResultPaginationDTO fetchAllClinic(Pageable pageable) {
@@ -82,7 +94,7 @@ public class ClinicService {
 
         // convert
         List<ResClinicDTO> listClinic = page.getContent().stream()
-                .map(item -> this.convertToClinicDTO(item))
+                .map(ClinicMapper::toResClinicDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listClinic);
@@ -92,20 +104,36 @@ public class ClinicService {
     }
 
     public Clinic fetchClinicById(long id) {
-        return this.clinicRepository.findById(id).orElse(null);
+        return this.clinicRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("Clinic với id " + id + " không tồn tại"));
     }
 
     public void handleDeleteClinic(long id) {
+        // Validation: check clinic exists (will throw if not found)
         Clinic c = this.fetchClinicById(id);
-        if (c != null) {
+
+        try {
             c.setIsActive(false);
             this.clinicRepository.save(c);
+        } catch (Exception e) {
+            throw new StorageException("Không thể xóa clinic: " + e.getMessage(), e);
         }
     }
 
     public Clinic handleUpdateClinic(ReqClinicDTO clinic, long id, MultipartFile file) throws StorageException {
+        // Validation: check clinic exists (will throw if not found)
         Clinic c = this.fetchClinicById(id);
-        if (c != null) {
+
+        // Validation: check name exists for other clinics
+        if (this.clinicRepository.existsByNameAndIdNot(clinic.getName(), id)) {
+            throw new IdInvalidException(
+                    "Name " + clinic.getName() + " đã tồn tại, Vui lòng sử dụng name khác.");
+        }
+
+        // Validation: check address exists (addressService will throw if not found)
+        Address address = this.addressService.fetchAddressById(clinic.getAddressId());
+
+        try {
             c.setName(clinic.getName());
             c.setPhoneNumber(clinic.getPhoneNumber());
             c.setPosition(clinic.getPosition());
@@ -114,11 +142,13 @@ public class ClinicService {
 
             // upload image
             if (file != null && !file.isEmpty()) {
-                ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(file, folder,
-                        String.valueOf(c.getId()));
-
-                c.setImage(resImg.getUrl());
-
+                try {
+                    ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(file, folder,
+                            String.valueOf(c.getId()));
+                    c.setImage(resImg.getUrl());
+                } catch (Exception e) {
+                    throw new StorageException("Không thể upload ảnh: " + e.getMessage(), e);
+                }
             }
 
             if (clinic.getAddressId() != null) {
@@ -126,9 +156,12 @@ public class ClinicService {
                 c.setAddress(a);
             }
 
-            this.clinicRepository.save(c);
+            return this.clinicRepository.save(c);
+        } catch (StorageException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new StorageException("Không thể cập nhật clinic: " + e.getMessage(), e);
         }
-        return c;
     }
 
     public boolean existsByNameAndIdNot(String name, Long id) {
@@ -136,30 +169,12 @@ public class ClinicService {
     }
 
     public boolean existsAddressActiveById(long id) {
-        // address active true
-        Address a = this.addressService.fetchAddressById(id);
-        return a != null;
-    }
-
-    public ResClinicDTO convertToClinicDTO(Clinic clinic) {
-        if (clinic == null)
-            return null;
-
-        ResClinicDTO dto = new ResClinicDTO();
-        dto.setId(clinic.getId());
-        dto.setName(clinic.getName());
-        dto.setDescription(clinic.getDescription());
-        dto.setPosition(clinic.getPosition());
-        dto.setPhoneNumber(clinic.getPhoneNumber());
-        dto.setImage(clinic.getImage());
-
-        if (clinic.getAddress() != null) {
-            dto.setAddress(new ResClinicDTO.ResAddressDTO(
-                    clinic.getAddress().getId(),
-                    clinic.getAddress().getCity()));
+        try {
+            Address a = this.addressService.fetchAddressById(id);
+            return a != null && a.getIsActive();
+        } catch (IdInvalidException e) {
+            return false;
         }
-
-        return dto;
     }
 
     public Page<Clinic> getAllClinicWithSpecs(Pageable pageable, ClinicCriteriaDTO clinicCriteriaDTO) {
@@ -214,7 +229,7 @@ public class ClinicService {
 
         // convert
         List<ResClinicDTO> listClinic = page.getContent().stream()
-                .map(item -> this.convertToClinicDTO(item))
+                .map(ClinicMapper::toResClinicDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listClinic);

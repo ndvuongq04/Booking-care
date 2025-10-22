@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -33,24 +34,28 @@ public class BillController {
 
     @PostMapping("/bill")
     @ApiMessage("Create new Bill")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPPORT')")
     public ResponseEntity<ResBillDTO> createNewBill(@Valid @RequestBody ReqBillDTO reqBill) throws IdInvalidException {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.billService.createBill(reqBill));
     }
 
     @GetMapping("/bill")
     @ApiMessage("Fetch all Bill")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResultPaginationDTO> getAllBill(Pageable pageable) {
         return ResponseEntity.ok(this.billService.handleGetAllBill(pageable));
     }
 
     @GetMapping("/bill/{id}")
     @ApiMessage("Fetch Bill by id")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResBillDTO> getBillById(@PathVariable("id") long id) throws IdInvalidException {
         return ResponseEntity.ok(this.billService.getBillById(id));
     }
 
     @GetMapping("/bill/patient/{id}")
     @ApiMessage("Fetch Bill by patient id")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResultPaginationDTO> getBillByPatientId(@PathVariable("id") long id, Pageable pageable)
             throws IdInvalidException {
         return ResponseEntity.ok(this.billService.getBillByPatientId(id, pageable));
@@ -58,6 +63,7 @@ public class BillController {
 
     @GetMapping("/bill/clinic/{id}")
     @ApiMessage("Fetch Bill by clinic id")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPPORT')")
     public ResponseEntity<ResultPaginationDTO> getBillByClinicId(@PathVariable("id") long id, Pageable pageable)
             throws IdInvalidException {
         return ResponseEntity.ok(this.billService.getBillByClinicId(id, pageable));
@@ -65,6 +71,7 @@ public class BillController {
 
     @GetMapping("/bill/clinic/{id}/search")
     @ApiMessage("Search Bill by clinic id")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPPORT')")
     public ResponseEntity<ResultPaginationDTO> getBillByClinicIdSearch(@PathVariable("id") long id, Pageable pageable,
             BillClinicCriteriaDTO billClinicCriteriaDTO)
             throws IdInvalidException {
@@ -74,6 +81,7 @@ public class BillController {
 
     @GetMapping("/bill/search")
     @ApiMessage("Fetch all Bill search/filter")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResultPaginationDTO> getAllBillSearch(Pageable pageable, BillCriteriaDTO billCriteriaDTO) {
         return ResponseEntity.ok(this.billService.handleGetAllBillSearch(pageable, billCriteriaDTO));
     }

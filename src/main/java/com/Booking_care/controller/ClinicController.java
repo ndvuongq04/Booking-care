@@ -23,7 +23,9 @@ import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.ClinicService;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
+import com.Booking_care.mapper.clinic.ClinicMapper;
 import com.Booking_care.util.error.StorageException;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import jakarta.validation.Valid;
 
@@ -38,79 +40,39 @@ public class ClinicController {
 
     @PostMapping(value = "/clinics")
     @ApiMessage("Create new clinic")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResClinicDTO> createNewClinic(@Valid @RequestBody ReqClinicDTO reqClinic)
             throws IdInvalidException {
-        boolean isNameExits = this.clinicService.isNameExits(reqClinic.getName());
-
-        if (isNameExits) {
-            throw new IdInvalidException(
-                    "Name " + reqClinic.getName() + " đã tồn tại, Vui lòng sử dụng name khác.");
-        }
-
-        boolean isAddressActiveExits = this.clinicService.existsAddressActiveById(reqClinic.getAddressId());
-        if (!isAddressActiveExits) {
-            throw new IdInvalidException(
-                    "Address : " + reqClinic.getAddressId()
-                            + " không tồn tại (Không hoạt động), Vui lòng sử dụng address khác.");
-        }
         Clinic c = this.clinicService.handleCreateClinic(reqClinic);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(this.clinicService.convertToClinicDTO(c));
+                .body(ClinicMapper.toResClinicDTO(c));
     }
 
     @GetMapping("/clinics/{id}")
     @ApiMessage("Fetch clinic by id")
     public ResponseEntity<ResClinicDTO> getClinicById(@PathVariable("id") long id) throws IdInvalidException {
         Clinic c = this.clinicService.fetchClinicById(id);
-
-        if (c == null) {
-            throw new IdInvalidException("Clinic với id " + id + " không tồn tại");
-        }
-
         return ResponseEntity.status(HttpStatus.OK)
-                .body(this.clinicService.convertToClinicDTO(c));
+                .body(ClinicMapper.toResClinicDTO(c));
     }
 
     @DeleteMapping("clinics/{id}")
     @ApiMessage("Delete a clinic")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteClinicById(@PathVariable("id") long id) throws IdInvalidException {
-        Clinic c = this.clinicService.fetchClinicById(id);
-
-        if (c == null) {
-            throw new IdInvalidException("Clinic với id " + id + " không tồn tại");
-        }
         this.clinicService.handleDeleteClinic(id);
-
         return ResponseEntity.ok(null);
     }
 
     @PutMapping(value = "/clinics/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Update a clinic")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPPORT')")
     public ResponseEntity<ResClinicDTO> updateAccount(@Valid @ModelAttribute ReqClinicDTO reqClinic,
             @PathVariable("id") long id,
             @RequestParam(value = "file", required = false) MultipartFile file)
             throws IdInvalidException, StorageException {
-        Clinic c = this.clinicService.fetchClinicById(id);
-
-        if (c == null) {
-            throw new IdInvalidException("Clinic với id " + id + " không tồn tại");
-        }
-
-        boolean isNameExits = this.clinicService.existsByNameAndIdNot(reqClinic.getName(), id);
-        if (isNameExits) {
-            throw new IdInvalidException(
-                    "Name " + reqClinic.getName() + " đã tồn tại, Vui lòng sử dụng name khác.");
-        }
-
-        boolean isAddressExist = this.clinicService.existsAddressActiveById(reqClinic.getAddressId());
-        if (!isAddressExist) {
-            throw new IdInvalidException(
-                    "Address : " + reqClinic.getAddressId()
-                            + " không tồn tại, Vui lòng sử dụng address khác.");
-        }
         Clinic clinic = this.clinicService.handleUpdateClinic(reqClinic, id, file);
-
-        return ResponseEntity.ok(this.clinicService.convertToClinicDTO(clinic));
+        return ResponseEntity.ok(ClinicMapper.toResClinicDTO(clinic));
     }
 
     @GetMapping("/clinics")

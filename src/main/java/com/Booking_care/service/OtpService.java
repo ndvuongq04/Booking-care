@@ -58,6 +58,12 @@ public class OtpService {
         return true;
     }
 
+    public void verifyOtpOrThrow(Otp reqOtp) {
+        if (!verify_otp(reqOtp)) {
+            throw new com.Booking_care.util.error.IdInvalidException("Otp không hợp lệ");
+        }
+    }
+
     public void invalidateOtp(String email) {
         this.otpRepository.deleteById(email);
     }

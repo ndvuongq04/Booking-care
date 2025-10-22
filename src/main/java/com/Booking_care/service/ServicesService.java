@@ -1,17 +1,16 @@
 package com.Booking_care.service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-
 import com.Booking_care.repository.ServiceRepository;
 import com.Booking_care.service.specification.ServicesSpecs;
+import com.Booking_care.util.error.IdInvalidException;
 import com.Booking_care.domain.Services;
+import com.Booking_care.mapper.services.ServicesMapper;
 import com.Booking_care.domain.dto.ServicesDTO.ResServicesDTO;
 import com.Booking_care.domain.dto.ServicesDTO.ServicesCriteriaDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
@@ -25,12 +24,22 @@ public class ServicesService {
     }
 
     public Services handleCreateService(Services reqService) {
-        Services service = new Services();
-        service.setName(reqService.getName());
-        service.setCost(reqService.getCost());
-        service.setDescription(reqService.getDescription());
+        // Validation: check name exists
+        if (this.serviceRepository.existsByName(reqService.getName())) {
+            throw new IdInvalidException(
+                    "Tên Dịch vụ'" + reqService.getName() + "' đã tồn tại, vui lòng chọn tên khác");
+        }
 
-        return this.serviceRepository.save(service);
+        try {
+            Services service = new Services();
+            service.setName(reqService.getName());
+            service.setCost(reqService.getCost());
+            service.setDescription(reqService.getDescription());
+
+            return this.serviceRepository.save(service);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể tạo service: " + e.getMessage());
+        }
     }
 
     public ResultPaginationDTO fetchAllServices(Pageable pageable) {
@@ -47,7 +56,7 @@ public class ServicesService {
         meta.setTotals(page.getTotalElements());
 
         List<ResServicesDTO> listServices = page.getContent().stream()
-                .map(item -> this.handleConvertToResServicesDTO(item))
+                .map(ServicesMapper::toResServicesDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listServices);
@@ -56,43 +65,35 @@ public class ServicesService {
         return res;
     }
 
-    public ResServicesDTO handleConvertToResServicesDTO(Services services) {
-        ResServicesDTO res = new ResServicesDTO();
-
-        res.setId(services.getId());
-        res.setName(services.getName());
-        res.setDescription(services.getDescription());
-        res.setCost(services.getCost());
-        res.setCreateAt(services.getCreateAt());
-        res.setUpdateAt(services.getUpdateAt());
-
-        return res;
-    }
-
     public Services fetchServicesById(long id) {
-        Optional<Services> ser = this.serviceRepository.findById(id);
-
-        if (ser.isPresent()) {
-            return ser.get();
-        }
-        return null;
+        return this.serviceRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("Services với id " + id + " không tồn tại"));
     }
 
     public void handleDeleteServices(long id) {
-        this.serviceRepository.deleteById(id);
+        // Validation: check services exists (will throw if not found)
+        this.fetchServicesById(id);
+
+        try {
+            this.serviceRepository.deleteById(id);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể xóa service: " + e.getMessage());
+        }
     }
 
     public Services handleUpdateServices(Services reqServices) {
+        // Validation: check services exists (will throw if not found)
         Services services = this.fetchServicesById(reqServices.getId());
 
-        if (services != null) {
+        try {
             services.setName(reqServices.getName());
             services.setCost(reqServices.getCost());
             services.setDescription(reqServices.getDescription());
 
-            this.serviceRepository.save(services);
+            return this.serviceRepository.save(services);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể cập nhật service: " + e.getMessage());
         }
-        return services;
     }
 
     public boolean isNameExits(String name) {
@@ -130,7 +131,7 @@ public class ServicesService {
         meta.setTotals(page.getTotalElements());
 
         List<ResServicesDTO> listServices = page.getContent().stream()
-                .map(item -> this.handleConvertToResServicesDTO(item))
+                .map(ServicesMapper::toResServicesDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listServices);

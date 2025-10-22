@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.oauth2.jwt.Jwt;
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Otp;
-import com.Booking_care.domain.Patient;
 import com.Booking_care.domain.dto.AccountDTO.CreateAccountDTO;
 import com.Booking_care.domain.dto.AccountDTO.ResAccountDTO;
 import com.Booking_care.domain.dto.AuthDTO.PasswordDTO;
@@ -29,17 +28,16 @@ import com.Booking_care.domain.dto.PatientDTO.ResPatientDTO;
 import com.Booking_care.service.*;
 import com.Booking_care.util.SecurityUtil;
 import com.Booking_care.util.annotation.ApiMessage;
-import com.Booking_care.util.error.IdInvalidException;
-
+import com.Booking_care.mapper.patient.PatientMapper;
+import com.Booking_care.mapper.account.AccountMapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import java.security.SecureRandom;
-import java.time.Duration;
 import java.time.Instant;
 import org.springframework.beans.factory.annotation.Value;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -150,6 +148,7 @@ public class AuthController {
 
     @GetMapping("/auth/account")
     @ApiMessage("fetch account")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResLoginDTO.UserLogin> getAccount() {
         String email = SecurityUtil.getCurrentUserLogin().isPresent()
                 ? SecurityUtil.getCurrentUserLogin().get()
@@ -170,20 +169,15 @@ public class AuthController {
 
     @GetMapping("/auth/refresh")
     @ApiMessage("Get Account by refresh token")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResLoginDTO> getRefreshToken(
-            @CookieValue(name = "refresh_token", defaultValue = "abc") String refresh_token) throws IdInvalidException {
-        if (refresh_token.equals("abc")) {
-            throw new IdInvalidException("Bạn không có refresh token ở cookie");
-        }
+            @CookieValue(name = "refresh_token", defaultValue = "abc") String refresh_token) {
         // check valid
         Jwt decodedToken = this.securityUtil.checkValidRefreshToken(refresh_token);
         String email = decodedToken.getSubject();
 
-        // check user by token + email
+        // check user by token + email (validation inside service)
         Account currentAccount = this.accountService.getAccountByRefreshTokenAndEmail(refresh_token, email);
-        if (currentAccount == null) {
-            throw new IdInvalidException("Refresh Token không hợp lệ");
-        }
 
         // issue new token/set refresh token as cookies
         ResLoginDTO res = new ResLoginDTO();
@@ -253,15 +247,12 @@ public class AuthController {
 
     @PostMapping("/auth/logout")
     @ApiMessage("Logout Account")
-    public ResponseEntity<Void> logout() throws IdInvalidException {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> logout() {
         String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
 
-        if (email.equals("")) {
-            throw new IdInvalidException("Access Token không hợp lệ");
-        }
-
-        // update refresh token = null
-        this.accountService.updateToken(null, email);
+        // Validation moved to service
+        this.accountService.handleLogout(email);
 
         // remove refresh token cookie
         ResponseCookie deleteSpringCookie = ResponseCookie
@@ -279,13 +270,9 @@ public class AuthController {
 
     @PostMapping("/auth/register")
     @ApiMessage("Register a new account (send otp by email)")
-    public ResponseEntity<String> register(@Valid @RequestBody CreateAccountDTO postManAccount)
-            throws IdInvalidException {
-        boolean isEmailExist = this.accountService.isEmailExits(postManAccount.getEmail());
-        if (isEmailExist) {
-            throw new IdInvalidException(
-                    "Email " + postManAccount.getEmail() + "đã tồn tại, vui lòng sử dụng email khác.");
-        }
+    public ResponseEntity<String> register(@Valid @RequestBody CreateAccountDTO postManAccount) {
+        // Validation in service
+        this.accountService.validateEmailNotExists(postManAccount.getEmail());
 
         // send email
         this.emailService.sendEmailFromTemplateSync(postManAccount.getEmail(), "Xác thực email",
@@ -297,30 +284,19 @@ public class AuthController {
 
     @PutMapping("/auth/reset-password/{id}")
     @ApiMessage("Reset password")
-    public ResponseEntity<Void> putMethodName(@PathVariable long id, @RequestBody PasswordDTO passwordDTO)
-            throws IdInvalidException {
-        Account acc = this.accountService.fetchAccountById(id);
-        if (acc == null) {
-            throw new IdInvalidException("id không tồn tại");
-        }
-        if (!passwordEncoder.matches(passwordDTO.getPassword(), acc.getPassword())) {
-            throw new IdInvalidException("Mật khẩu hiện tại không đúng");
-        }
-
-        this.accountService.handleResetPassword(id, passwordDTO.getNewPassword());
-
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> resetPassword(@PathVariable long id, @RequestBody PasswordDTO passwordDTO) {
+        // Validation in service
+        this.accountService.handleResetPassword(id, passwordDTO.getNewPassword(), passwordDTO.getPassword());
         return ResponseEntity.ok(null);
     }
 
     @PostMapping("/auth/create-verify-otp")
-    public ResponseEntity<ResPatientDTO> handleVerifyOtp(@RequestBody Otp otp) throws IdInvalidException {
+    public ResponseEntity<ResPatientDTO> handleVerifyOtp(@RequestBody Otp otp) {
 
-        // xác thực email
+        // xác thực email (validation in service)
         otp.setCurrentSubmit(Instant.now());
-        boolean verifyEmail = this.otpService.verify_otp(otp);
-        if (!verifyEmail) {
-            throw new IdInvalidException("Otp không hợp lệ");
-        }
+        this.otpService.verifyOtpOrThrow(otp);
 
         // xóa OTP sau khi dùng xong
         this.otpService.invalidateOtp(otp.getEmail());
@@ -339,13 +315,12 @@ public class AuthController {
         p.setAccountId(a.getId());
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(this.patientService.convertToResPatientDTO(this.patientService.handleCreatePatient(p)));
+                .body(PatientMapper.toResPatientDTO(this.patientService.handleCreatePatient(p)));
     }
 
     @GetMapping("/auth/forgot-password-send-email")
     @ApiMessage("Forgot password (send otp by email)")
-    public ResponseEntity<String> forgotPassword(@RequestParam String email)
-            throws IdInvalidException {
+    public ResponseEntity<String> forgotPassword(@RequestParam String email) {
         // send email
         this.emailService.sendEmailFromTemplateSync(email, "Đặt lại mật khẩu",
                 templateForgotPassword, null,
@@ -355,14 +330,11 @@ public class AuthController {
     }
 
     @PostMapping("/auth/forgot-verify-otp")
-    public ResponseEntity<String> handleVerifyOtpForgotPassword(@RequestBody Otp otp) throws IdInvalidException {
+    public ResponseEntity<String> handleVerifyOtpForgotPassword(@RequestBody Otp otp) {
 
-        // xác thực email
+        // xác thực email (validation in service)
         otp.setCurrentSubmit(Instant.now());
-        boolean verifyEmail = this.otpService.verify_otp(otp);
-        if (!verifyEmail) {
-            throw new IdInvalidException("Otp không hợp lệ");
-        }
+        this.otpService.verifyOtpOrThrow(otp);
 
         // xóa OTP sau khi dùng xong
         this.otpService.invalidateOtp(otp.getEmail());
@@ -373,10 +345,9 @@ public class AuthController {
 
     @PostMapping("/auth/forgot-password")
     @ApiMessage("Forgot password")
-    public ResponseEntity<ResAccountDTO> handleVerifyOtpForgotPassword(@RequestBody ResetPasswordRequest reset)
-            throws IdInvalidException {
+    public ResponseEntity<ResAccountDTO> handleVerifyOtpForgotPassword(@RequestBody ResetPasswordRequest reset) {
 
-        ResAccountDTO acc = this.accountService.convertToResAccountDTO(
+        ResAccountDTO acc = AccountMapper.toResAccountDTO(
                 this.accountService.forgotPassword(reset));
 
         return ResponseEntity.status(HttpStatus.OK)

@@ -1,11 +1,6 @@
 package com.Booking_care.service;
 
 import org.springframework.stereotype.Service;
-
-import com.Booking_care.domain.Account;
-import com.Booking_care.domain.Doctor;
-import com.Booking_care.domain.Patient;
-import com.Booking_care.domain.Support;
 import com.Booking_care.domain.enums.RoleName;
 import com.Booking_care.repository.AccountRepository;
 import com.Booking_care.repository.DoctorRepository;

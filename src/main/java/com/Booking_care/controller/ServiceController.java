@@ -9,6 +9,7 @@ import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.ServicesService;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
+import com.Booking_care.mapper.services.ServicesMapper;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -31,57 +33,37 @@ public class ServiceController {
 
     @PostMapping("/services")
     @ApiMessage("Create new Service")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResServicesDTO> createNewService(@Valid @RequestBody Services reqService)
             throws IdInvalidException {
-
-        boolean isNameExits = this.servicesService.isNameExits(reqService.getName());
-        if (isNameExits) {
-            throw new IdInvalidException(
-                    "Tên Dịch vụ'" + reqService.getName() + "' đã tồn tại, vui lòng chọn tên khác");
-        }
-
         Services services = this.servicesService.handleCreateService(reqService);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(this.servicesService.handleConvertToResServicesDTO(services));
+                .body(ServicesMapper.toResServicesDTO(services));
     }
 
     @GetMapping("/services/{id}")
     @ApiMessage("Fetch services by id")
     public ResponseEntity<ResServicesDTO> getServicesById(@PathVariable("id") long id) throws IdInvalidException {
         Services services = this.servicesService.fetchServicesById(id);
-
-        if (services == null) {
-            throw new IdInvalidException("Services với id " + id + " không tồn tại");
-        }
-
         return ResponseEntity.status(HttpStatus.OK)
-                .body(this.servicesService.handleConvertToResServicesDTO(services));
+                .body(ServicesMapper.toResServicesDTO(services));
     }
 
     @PutMapping("/services")
     @ApiMessage("Update a services")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResServicesDTO> updateServices(@Valid @RequestBody Services reqService)
             throws IdInvalidException {
         Services services = this.servicesService.handleUpdateServices(reqService);
-
-        if (services == null) {
-            throw new IdInvalidException("Account với id " + reqService.getId() + " không tồn tại");
-        }
-
-        return ResponseEntity.ok(this.servicesService.handleConvertToResServicesDTO(services));
+        return ResponseEntity.ok(ServicesMapper.toResServicesDTO(services));
     }
 
     @DeleteMapping("services/{id}")
     @ApiMessage("Delete a services")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteServicesById(@PathVariable("id") long id)
             throws IdInvalidException {
-        Services services = this.servicesService.fetchServicesById(id);
-
-        if (services == null) {
-            throw new IdInvalidException("Account với id " + id + " không tồn tại");
-        }
         this.servicesService.handleDeleteServices(id);
-
         return ResponseEntity.ok(null);
     }
 

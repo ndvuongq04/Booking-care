@@ -80,4 +80,15 @@ public class GlobalException {
         res.setError("Upload image exception occurs...");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
+
+    @ExceptionHandler(value = {
+            ResourceNotFoundException.class
+    })
+    public ResponseEntity<RestResponse<Object>> handleResourceNotFoundException(Exception ex) {
+        RestResponse<Object> res = new RestResponse<Object>();
+        res.setStatusCode(HttpStatus.NOT_FOUND.value());
+        res.setMessage(ex.getMessage());
+        res.setError("Resource not found...");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+    }
 }

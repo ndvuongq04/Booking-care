@@ -1,14 +1,11 @@
 package com.Booking_care.service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.Booking_care.domain.Booking;
 import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Feedback;
@@ -18,6 +15,8 @@ import com.Booking_care.domain.dto.FeedbackDTO.ReqFeedbackDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.BookingRepository;
 import com.Booking_care.repository.FeedbackRepository;
+import com.Booking_care.util.error.IdInvalidException;
+import com.Booking_care.mapper.feedback.FeedbackMapper;
 
 @Service
 public class FeedbackService {
@@ -59,7 +58,7 @@ public class FeedbackService {
 
         // convert
         List<ResFeedbackDTO> listFeedback = page.getContent().stream()
-                .map(item -> this.convertToResFeedbackDTO(item))
+                .map(FeedbackMapper::toResFeedbackDTO)
                 .collect(Collectors.toList());
         res.setResult(listFeedback);
         res.setMeta(meta);
@@ -68,73 +67,66 @@ public class FeedbackService {
     }
 
     public Feedback fetchFeedbackById(long id) {
-        Optional<Feedback> feedback = this.feedbackRepository.findById(id);
-        if (feedback.isPresent()) {
-            return feedback.get();
-        }
-        return null;
+        return this.feedbackRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("feedback với id " + id + " không tồn tại"));
     }
 
     @Transactional
     public Feedback handleCreateFeedback(ReqFeedbackDTO req) {
-        Feedback fb = new Feedback();
-        fb.setRate(req.getRate());
-        fb.setDescription(req.getDescription());
+        // Validation: check doctor exists (will throw if not found)
+        Doctor doctor = this.doctorService.fetchDoctorById(req.getDoctorId());
 
-        fb.setDoctor(this.doctorService.fetchDoctorById(req.getDoctorId()));
-        fb.setPatient(this.patientService.fetchPatientById(req.getDoctorId()));
+        // Validation: check patient exists (will throw if not found)
+        Patient patient = this.patientService.fetchPatientById(req.getPatientId());
 
+        // Validation: check booking exists (will throw if not found)
         Booking bk = this.bookingService.getBookingById(req.getBookingId());
-        fb.setBooking(bk);
 
-        Feedback fed = this.feedbackRepository.save(fb);
+        try {
+            Feedback fb = new Feedback();
+            fb.setRate(req.getRate());
+            fb.setDescription(req.getDescription());
+            fb.setDoctor(doctor);
+            fb.setPatient(patient);
+            fb.setBooking(bk);
 
-        bk.setCheckFeedback(true);
+            Feedback fed = this.feedbackRepository.save(fb);
 
-        this.bookingRepository.save(bk);
+            bk.setCheckFeedback(true);
+            this.bookingRepository.save(bk);
 
-        return fed;
+            return fed;
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể tạo feedback: " + e.getMessage());
+        }
     }
 
     public Feedback handleUpdateFeedback(Feedback feedback) {
+        // Validation: check feedback exists (will throw if not found)
         Feedback currentFeedback = this.fetchFeedbackById(feedback.getId());
-        if (currentFeedback != null) {
+
+        try {
             if (feedback.getDoctor() != null) {
                 Doctor doctor = this.fetchDoctorById(feedback.getDoctor().getId());
-                currentFeedback.setDoctor(doctor != null ? doctor : null);
+                currentFeedback.setDoctor(doctor);
             }
             currentFeedback.setRate(feedback.getRate());
             currentFeedback.setDescription(feedback.getDescription());
-            currentFeedback = this.feedbackRepository.save(currentFeedback);
+            return this.feedbackRepository.save(currentFeedback);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể cập nhật feedback: " + e.getMessage());
         }
-        return currentFeedback;
     }
 
     public void handleDeleteFeedback(long id) {
-        this.feedbackRepository.deleteById(id);
-    }
+        // Validation: check feedback exists (will throw if not found)
+        this.fetchFeedbackById(id);
 
-    public ResFeedbackDTO convertToResFeedbackDTO(Feedback fb) {
-        if (fb == null)
-            return null;
-        ResFeedbackDTO res = new ResFeedbackDTO();
-        res.setId(fb.getId());
-        res.setDescription(fb.getDescription());
-        res.setRate(fb.getRate());
-
-        // doctor
-        Doctor doctor = fb.getDoctor();
-        if (doctor != null) {
-            res.setDoctor(doctorService.convertToDoctorDTO(doctor));
+        try {
+            this.feedbackRepository.deleteById(id);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể xóa feedback: " + e.getMessage());
         }
-
-        // patient
-        Patient patient = fb.getPatient();
-        if (patient != null) {
-            res.setPatient(patientService.convertToResPatientDTO(patient));
-        }
-
-        return res;
     }
 
     public ResultPaginationDTO fetchFeedbackByDoctorId(Pageable pageable, Long doctorId) {
@@ -152,7 +144,7 @@ public class FeedbackService {
 
         // convert
         List<ResFeedbackDTO> listFeedback = page.getContent().stream()
-                .map(item -> this.convertToResFeedbackDTO(item))
+                .map(FeedbackMapper::toResFeedbackDTO)
                 .collect(Collectors.toList());
         res.setResult(listFeedback);
         res.setMeta(meta);

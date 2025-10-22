@@ -6,17 +6,12 @@ import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.dto.DoctorDTO.DoctorCriteriaDTO;
 import com.Booking_care.domain.dto.DoctorDTO.ResDoctorDTO;
 import com.Booking_care.domain.dto.DoctorDTO.UpdateDoctorDTO;
-import com.Booking_care.domain.enums.RoleName;
 import com.Booking_care.domain.response.ResultPaginationDTO;
-import com.Booking_care.service.AccountProfile;
-import com.Booking_care.service.ClinicService;
 import com.Booking_care.service.DoctorService;
-import com.Booking_care.service.SpecialtyService;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
-
+import com.Booking_care.mapper.doctor.DoctorMapper;
 import jakarta.validation.Valid;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,98 +22,46 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1")
 public class DoctorController {
     private final DoctorService doctorService;
-    private final ClinicService clinicService;
-    private final SpecialtyService specialtyService;
-    private final AccountProfile accountProfile;
 
-    public DoctorController(DoctorService doctorService, ClinicService clinicService, SpecialtyService specialtyService,
-            AccountProfile accountProfile) {
+    public DoctorController(DoctorService doctorService) {
         this.doctorService = doctorService;
-        this.clinicService = clinicService;
-        this.specialtyService = specialtyService;
-        this.accountProfile = accountProfile;
     }
 
     @PostMapping("doctors")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ResDoctorDTO> createNewDoctor(@Valid @RequestBody Doctor doctor) throws IdInvalidException {
-
-        if (this.doctorService.fetchAccountById(doctor.getAccount().getId()) == null) {
-            throw new IdInvalidException("Account với id " + doctor.getAccount().getId() + " không tồn tại");
-        }
-
-        this.accountProfile.accountUsed(doctor.getAccount().getId());
-        // check role account
-        boolean checkRole = this.accountProfile.accountHasRole(doctor.getAccount().getId(), RoleName.DOCTOR);
-        if (!checkRole) {
-            throw new IdInvalidException(
-                    "Account id :" + doctor.getAccount().getId() + " không có quyền " + RoleName.DOCTOR);
-        }
-
-        if (this.doctorService.isAccountExits(doctor.getAccount().getId())) {
-            throw new IdInvalidException(
-                    "Account với id " + doctor.getAccount().getId() + " đã được sử dụng cho một bác sĩ khác");
-        }
-
-        if (this.clinicService.fetchClinicById(doctor.getClinic().getId()) == null) {
-            throw new IdInvalidException("Clinic với id :" + doctor.getClinic().getId() + " không tồn tại");
-        }
-
-        if (this.specialtyService.fetchSpecialtyById(doctor.getSpecialty().getId()) == null) {
-            throw new IdInvalidException("Specialty với id :" + doctor.getSpecialty().getId() + " không tồn tại");
-        }
-
         Doctor doctorDB = this.doctorService.handleCreateDoctor(doctor);
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.doctorService.convertToDoctorDTO(doctorDB));
+        return ResponseEntity.status(HttpStatus.CREATED).body(DoctorMapper.toResDoctorDTO(doctorDB));
     }
 
     @PutMapping("doctors")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<ResDoctorDTO> updateDoctor(@Valid @RequestBody UpdateDoctorDTO reqDoctor)
             throws IdInvalidException {
-
-        if (this.doctorService.fetchDoctorById(reqDoctor.getId()) == null) {
-            throw new IdInvalidException("Doctor với id " + reqDoctor.getId() + " không tồn tại");
-        }
-        if (this.clinicService.fetchClinicById(reqDoctor.getClinic().getId()) == null) {
-            throw new IdInvalidException("Clinic với id :" + reqDoctor.getClinic().getId() + " không tồn tại");
-        }
-
-        if (this.specialtyService.fetchSpecialtyById(reqDoctor.getSpecialty().getId()) == null) {
-            throw new IdInvalidException("Specialty với id :" + reqDoctor.getSpecialty().getId() + " không tồn tại");
-        }
-
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(this.doctorService.convertToDoctorDTO(this.doctorService.handleUpdateDoctor(reqDoctor)));
+                .body(DoctorMapper.toResDoctorDTO(this.doctorService.handleUpdateDoctor(reqDoctor)));
     }
 
     @GetMapping("/doctors/{id}")
     @ApiMessage("Fetch doctor by id")
     public ResponseEntity<ResDoctorDTO> getDoctorById(@PathVariable("id") long id) throws IdInvalidException {
         Doctor doctor = this.doctorService.fetchDoctorById(id);
-
-        if (doctor == null) {
-            throw new IdInvalidException("Doctor với id " + id + " không tồn tại");
-        }
-
         return ResponseEntity.status(HttpStatus.OK)
-                .body(this.doctorService.convertToDoctorDTO(doctor));
+                .body(DoctorMapper.toResDoctorDTO(doctor));
     }
 
     @DeleteMapping("/doctors/{id}")
     @ApiMessage("Delete doctor by id")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteDoctorById(@PathVariable("id") long id)
             throws IdInvalidException {
-        Doctor doctor = this.doctorService.fetchDoctorById(id);
-
-        if (doctor == null) {
-            throw new IdInvalidException("Doctor với id " + id + " không tồn tại");
-        }
-        this.doctorService.handleDeleteDoctor(doctor);
-
+        this.doctorService.handleDeleteDoctor(id);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(null);
     }

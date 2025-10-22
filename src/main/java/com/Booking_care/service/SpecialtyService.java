@@ -16,7 +16,9 @@ import com.Booking_care.domain.dto.SpecialtyDTO.SpecialtyCriteriaDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.SpecialtyRepository;
 import com.Booking_care.service.specification.SpecialtySpecs;
+import com.Booking_care.util.error.IdInvalidException;
 import com.Booking_care.util.error.StorageException;
+import com.Booking_care.mapper.specialty.SpecialtyMapper;
 
 @Service
 public class SpecialtyService {
@@ -31,22 +33,37 @@ public class SpecialtyService {
     }
 
     public Specialty handleCreateSpecialty(ReqSpecialtyDTO dto) throws StorageException {
-        Specialty s = new Specialty();
-
-        s.setName(dto.getName());
-        s.setDescription(dto.getDescription());
-        Specialty specialtyDb = specialtyRepository.save(s);
-
-        // upload images
-        if (dto.getFile() != null && !dto.getFile().isEmpty()) {
-            ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(dto.getFile(),
-                    folder,
-                    String.valueOf(specialtyDb.getId()));
-
-            specialtyDb.setImage(resImg.getUrl());
+        // Validation: check name exists
+        if (this.specialtyRepository.existsByName(dto.getName())) {
+            throw new IdInvalidException(
+                    "Tên chuyên khoa '" + dto.getName() + "' đã tồn tại, vui lòng chọn tên khác");
         }
 
-        return specialtyRepository.save(specialtyDb);
+        try {
+            Specialty s = new Specialty();
+
+            s.setName(dto.getName());
+            s.setDescription(dto.getDescription());
+            Specialty specialtyDb = specialtyRepository.save(s);
+
+            // upload images
+            if (dto.getFile() != null && !dto.getFile().isEmpty()) {
+                try {
+                    ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(dto.getFile(),
+                            folder,
+                            String.valueOf(specialtyDb.getId()));
+                    specialtyDb.setImage(resImg.getUrl());
+                } catch (Exception e) {
+                    throw new StorageException("Không thể upload ảnh: " + e.getMessage());
+                }
+            }
+
+            return specialtyRepository.save(specialtyDb);
+        } catch (StorageException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể tạo specialty: " + e.getMessage());
+        }
     }
 
     public boolean isNameExits(String name) {
@@ -58,34 +75,55 @@ public class SpecialtyService {
     }
 
     public Specialty fetchSpecialtyById(Long id) {
-        return specialtyRepository.findById(id).orElse(null);
+        return specialtyRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("Specialty với id " + id + " không tồn tại"));
     }
 
     public Specialty handleUpdateSpecialty(ReqSpecialtyDTO dto, long id) throws StorageException {
-        Specialty s = this.specialtyRepository.findById(id).orElse(null);
-        if (s != null) {
+        // Validation: check specialty exists (will throw if not found)
+        Specialty s = this.fetchSpecialtyById(id);
+
+        // Validation: check name exists for other specialties
+        if (this.specialtyRepository.existsByNameAndIdNot(dto.getName(), id)) {
+            throw new IdInvalidException(
+                    "Tên chuyên khoa '" + dto.getName() + "' đã tồn tại, vui lòng chọn tên khác");
+        }
+
+        try {
             s.setName(dto.getName());
             s.setDescription(dto.getDescription());
             s.setIsActive(dto.getIsActive());
 
             // upload images
             if (dto.getFile() != null && !dto.getFile().isEmpty()) {
-                ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(dto.getFile(),
-                        folder,
-                        String.valueOf(s.getId()));
-
-                s.setImage(resImg.getUrl());
+                try {
+                    ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(dto.getFile(),
+                            folder,
+                            String.valueOf(s.getId()));
+                    s.setImage(resImg.getUrl());
+                } catch (Exception e) {
+                    throw new StorageException("Không thể upload ảnh: " + e.getMessage());
+                }
             }
 
-            this.specialtyRepository.save(s);
+            return this.specialtyRepository.save(s);
+        } catch (StorageException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể cập nhật specialty: " + e.getMessage());
         }
-        return s;
     }
 
     public void handleDeleteSpecialty(Long id) {
+        // Validation: check specialty exists (will throw if not found)
         Specialty s = this.fetchSpecialtyById(id);
-        s.setIsActive(false);
-        this.specialtyRepository.save(s);
+        
+        try {
+            s.setIsActive(false);
+            this.specialtyRepository.save(s);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể xóa specialty: " + e.getMessage());
+        }
     }
 
     public ResultPaginationDTO fetchAllSpecialty(Pageable pageable) {
@@ -155,27 +193,6 @@ public class SpecialtyService {
         res.setResult(listSpecialty);
         res.setMeta(meta);
 
-        return res;
-    }
-
-    public ResSpecialtyDTO convertToResDTO(Specialty specialty) {
-        specialty = this.fetchSpecialtyById(specialty.getId());
-        return new ResSpecialtyDTO(
-                specialty.getId(),
-                specialty.getName(),
-                specialty.getDescription(),
-                specialty.getImage(),
-                specialty.getIsActive(),
-                specialty.getCreateAt(),
-                specialty.getUpdateAt());
-    }
-
-    public ResSpecialtyDTO getSpecialtyById(Long id) {
-        Specialty specialty = specialtyRepository.findById(id).orElse(null);
-        ResSpecialtyDTO res = new ResSpecialtyDTO();
-        if (specialty != null) {
-            res = this.convertToResDTO(specialty);
-        }
         return res;
     }
 

@@ -1,18 +1,17 @@
 package com.Booking_care.service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Notification;
 import com.Booking_care.domain.dto.ResNotificationDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.NotificationRepository;
+import com.Booking_care.util.error.IdInvalidException;
+import com.Booking_care.mapper.notification.NotificationMapper;
 
 @Service
 public class NotificationService {
@@ -47,7 +46,7 @@ public class NotificationService {
 
         // convert
         List<ResNotificationDTO> listNoti = page.getContent().stream()
-                .map(item -> this.convertToResNotificationDTO(item))
+                .map(NotificationMapper::toResNotificationDTO)
                 .collect(Collectors.toList());
         res.setResult(listNoti);
         res.setMeta(meta);
@@ -56,44 +55,48 @@ public class NotificationService {
     }
 
     public Notification fetchNotificationById(long id) {
-        Optional<Notification> noti = this.notificationRepository.findById(id);
-        if (noti.isPresent()) {
-            return noti.get();
-        }
-        return null;
+        return this.notificationRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("Notification với id " + id + " không tồn tại"));
     }
 
     public Notification handleCreateNotification(Notification notification) {
-        return this.notificationRepository.save(notification);
+        // Validation: check account exists (will throw if not found)
+        Account account = this.fetchAccountById(notification.getAccount().getId());
+
+        try {
+            notification.setAccount(account);
+            return this.notificationRepository.save(notification);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể tạo notification: " + e.getMessage());
+        }
     }
 
     public Notification handleUpdateNotification(Notification notification) {
+        // Validation: check notification exists (will throw if not found)
         Notification currentNotification = this.fetchNotificationById(notification.getId());
-        if (currentNotification != null) {
+
+        try {
             if (notification.getAccount() != null) {
                 Account account = this.fetchAccountById(notification.getAccount().getId());
-                // set value
-                currentNotification.setAccount(account != null ? account : null);
+                currentNotification.setAccount(account);
             }
             currentNotification.setTitle(notification.getTitle());
             currentNotification.setContent(notification.getContent());
-            currentNotification = this.notificationRepository.save(currentNotification);
+            return this.notificationRepository.save(currentNotification);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể cập nhật notification: " + e.getMessage());
         }
-        return currentNotification;
     }
 
     public void handleDeleteNotification(long id) {
-        this.notificationRepository.deleteById(id);
+        // Validation: check notification exists (will throw if not found)
+        this.fetchNotificationById(id);
+
+        try {
+            this.notificationRepository.deleteById(id);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể xóa notification: " + e.getMessage());
+        }
     }
 
-    public ResNotificationDTO convertToResNotificationDTO(Notification notification) {
-        ResNotificationDTO res = new ResNotificationDTO();
-        res.setId(notification.getId());
-        res.setCreateAt(notification.getCreateAt());
-        res.setContent(notification.getContent());
-        res.setTitle(notification.getTitle());
-        res.setAccount(this.accountService.convertToResAccountDTO(notification.getAccount()));
-
-        return res;
-    }
 }

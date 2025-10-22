@@ -2,7 +2,6 @@ package com.Booking_care.service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +16,10 @@ import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.SupportRepository;
 import com.Booking_care.service.specification.SupportSpecs;
 import com.Booking_care.domain.dto.ClinicDTO.ResClinicDTO;
+import com.Booking_care.util.error.IdInvalidException;
+import com.Booking_care.util.error.BusinessException;
+import com.Booking_care.mapper.support.SupportMapper;
+import com.Booking_care.mapper.clinic.ClinicMapper;
 
 @Service
 public class SupportService {
@@ -37,7 +40,7 @@ public class SupportService {
                 .orElseThrow(() -> new NoSuchElementException(
                         "Không tìm thấy clinic cho supportId=" + supportId));
 
-        ResClinicDTO res = this.clinicService.convertToClinicDTO(this.clinicService.fetchClinicById(clinicId));
+        ResClinicDTO res = ClinicMapper.toResClinicDTO(this.clinicService.fetchClinicById(clinicId));
 
         return res;
     }
@@ -51,45 +54,64 @@ public class SupportService {
     }
 
     public Support handleCreateSupport(Support support) {
-        return this.supportRepository.save(support);
-    }
+        // Validation 1: Check account exists (will throw if not found)
+        Account account = this.accountService.fetchAccountById(support.getAccount().getId());
+        
+        // Validation 2: Check account's role is SUPPORT (FIX BUG - tương tự Doctor/Patient module)
+        if (account.getRole() == null || !"SUPPORT".equals(account.getRole().getName())) {
+            throw new BusinessException("Chỉ tài khoản với role SUPPORT mới có thể tạo support profile");
+        }
+        
+        // Validation 3: Check account chưa có support profile
+        if (this.supportRepository.existsByAccountId(account.getId())) {
+            throw new BusinessException("Tài khoản này đã có support profile");
+        }
 
-    public ResSupportDTO convertToResSupportDTO(Support support) {
-        ResSupportDTO res = new ResSupportDTO();
-        Account acc = fetchAccountById(support.getAccount().getId());
-        res.setId(support.getId());
-        res.setIsActive(support.getIsActive());
-        res.setAccount(this.accountService.convertToResAccountDTO(acc));
-        res.setClinic(this.clinicService.convertToClinicDTO(support.getClinic()));
-        return res;
+        // Validation 4: Check clinic exists (will throw if not found)
+        Clinic clinic = this.clinicService.fetchClinicById(support.getClinic().getId());
+
+        try {
+            support.setAccount(account);
+            support.setClinic(clinic);
+            return this.supportRepository.save(support);
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể tạo support: " + e.getMessage());
+        }
     }
 
     public Support fetchSupportById(long id) {
-        Optional<Support> sup = this.supportRepository.findById(id);
-        if (sup.isPresent()) {
-            return sup.get();
-        }
-        return null;
+        return this.supportRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("Support với id " + id + " không tồn tại"));
     }
 
     public Support handleUpdateSupport(Support support) {
+        // Validation: check support exists (will throw if not found)
         Support currentSupport = this.fetchSupportById(support.getId());
-        if (currentSupport != null) {
 
-            if (support.getClinic() != null) {
-                Clinic clinic = this.clinicService.fetchClinicById(support.getClinic().getId());
-                currentSupport.setClinic(clinic != null ? clinic : null);
-            }
+        // Validation: check clinic exists (will throw if not found)
+        Clinic clinic = this.clinicService.fetchClinicById(support.getClinic().getId());
 
+        try {
+            currentSupport.setClinic(clinic);
             currentSupport.setIsActive(support.getIsActive());
-            currentSupport = this.supportRepository.save(currentSupport);
+            return this.supportRepository.save(currentSupport);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể cập nhật support: " + e.getMessage());
         }
-        return currentSupport;
     }
 
-    public void handleDeleteSupport(Support s) {
-        s.setIsActive(false);
-        this.supportRepository.save(s);
+    public void handleDeleteSupport(long id) {
+        // Validation: check support exists (will throw if not found)
+        Support s = this.fetchSupportById(id);
+
+        try {
+            s.setIsActive(false);
+            this.supportRepository.save(s);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể xóa support: " + e.getMessage());
+        }
     }
 
     public ResultPaginationDTO fetchAllSupport(Pageable pageable) {
@@ -107,7 +129,7 @@ public class SupportService {
 
         // convert
         List<ResSupportDTO> listDoc = page.getContent().stream()
-                .map(item -> this.convertToResSupportDTO(item))
+                .map(SupportMapper::toResSupportDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listDoc);
@@ -162,7 +184,7 @@ public class SupportService {
 
         // convert
         List<ResSupportDTO> listDoc = page.getContent().stream()
-                .map(item -> this.convertToResSupportDTO(item))
+                .map(SupportMapper::toResSupportDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listDoc);

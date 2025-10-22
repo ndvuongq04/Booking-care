@@ -11,15 +11,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.Booking_care.domain.Account;
-import com.Booking_care.domain.Doctor;
 import com.Booking_care.domain.Notification;
 import com.Booking_care.domain.dto.ResNotificationDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.service.NotificationService;
 import com.Booking_care.util.annotation.ApiMessage;
 import com.Booking_care.util.error.IdInvalidException;
+import com.Booking_care.mapper.notification.NotificationMapper;
 
 import jakarta.validation.Valid;
 
@@ -37,13 +35,8 @@ public class NotificationController {
     public ResponseEntity<ResNotificationDTO> fetchNotificationById(@PathVariable("id") long id)
             throws IdInvalidException {
         Notification notification = this.notificationService.fetchNotificationById(id);
-
-        if (notification == null) {
-            throw new IdInvalidException("Notification với id " + id + " không tồn tại");
-        }
-
         return ResponseEntity.status(HttpStatus.OK)
-                .body(this.notificationService.convertToResNotificationDTO(notification));
+                .body(NotificationMapper.toResNotificationDTO(notification));
     }
 
     @GetMapping
@@ -58,16 +51,9 @@ public class NotificationController {
     @ApiMessage("Create a notification")
     public ResponseEntity<ResNotificationDTO> handleCreateNotification(@Valid @RequestBody Notification notification)
             throws IdInvalidException {
-
-        Account acc = this.notificationService.fetchAccountById(notification.getAccount().getId());
-        if (acc == null) {
-            throw new IdInvalidException("Account với id " + notification.getAccount().getId() + " không tồn tại");
-        }
-
         Notification notificationDB = this.notificationService.handleCreateNotification(notification);
-
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(this.notificationService.convertToResNotificationDTO(notificationDB));
+                .body(NotificationMapper.toResNotificationDTO(notificationDB));
     }
 
     @PutMapping
@@ -75,26 +61,15 @@ public class NotificationController {
     public ResponseEntity<ResNotificationDTO> handleUpdateNotification(@Valid @RequestBody Notification notification)
             throws IdInvalidException {
         Notification notificationDb = this.notificationService.handleUpdateNotification(notification);
-
-        if (notificationDb == null) {
-            throw new IdInvalidException("Notification với id " + notification.getId() + " không tồn tại");
-        }
-
         return ResponseEntity.status(HttpStatus.OK)
-                .body(this.notificationService.convertToResNotificationDTO(notificationDb));
+                .body(NotificationMapper.toResNotificationDTO(notificationDb));
     }
 
     @DeleteMapping("/{id}")
     @ApiMessage("Delete notification by id")
     public ResponseEntity<Void> handleDeleteNotification(@PathVariable("id") long id)
             throws IdInvalidException {
-        Notification notification = this.notificationService.fetchNotificationById(id);
-
-        if (notification == null) {
-            throw new IdInvalidException("Notification với id " + id + " không tồn tại");
-        }
         this.notificationService.handleDeleteNotification(id);
-
         return ResponseEntity.status(HttpStatus.OK)
                 .body(null);
     }

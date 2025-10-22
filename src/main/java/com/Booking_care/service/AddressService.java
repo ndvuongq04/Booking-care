@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.Booking_care.domain.Address;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.AddressRepository;
+import com.Booking_care.util.error.IdInvalidException;
 
 @Service
 public class AddressService {
@@ -22,11 +23,22 @@ public class AddressService {
     }
 
     public Address handleCreateAddress(Address address) {
-        return this.addressRepository.save(address);
+        // Validation: check city exists
+        if (this.addressRepository.existsByCity(address.getCity())) {
+            throw new IdInvalidException(
+                    "Thành phố '" + address.getCity() + "' đã tồn tại, vui lòng chọn tên khác");
+        }
+
+        try {
+            return this.addressRepository.save(address);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể tạo address: " + e.getMessage());
+        }
     }
 
     public Address fetchAddressById(long id) {
-        return this.addressRepository.findById(id).orElse(null);
+        return this.addressRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("Address với id " + id + " không tồn tại"));
     }
 
     public boolean isCityExits(String city) {
@@ -34,21 +46,33 @@ public class AddressService {
     }
 
     public Address handleUpdateAddress(Address a) {
+        // Validation: check address exists (will throw if not found)
         Address address = this.fetchAddressById(a.getId());
-        if (address != null) {
-            address.setCity(a.getCity());
-            address.setIsActive(a.getIsActive());
-            this.addressRepository.save(address);
+
+        // Validation: check city exists for other addresses
+        if (this.addressRepository.existsByCityAndIdNot(a.getCity(), a.getId())) {
+            throw new IdInvalidException(
+                    "Tên chuyên khoa '" + a.getCity() + "' đã tồn tại, vui lòng chọn tên khác");
         }
 
-        return address;
+        try {
+            address.setCity(a.getCity());
+            address.setIsActive(a.getIsActive());
+            return this.addressRepository.save(address);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể cập nhật address: " + e.getMessage());
+        }
     }
 
     public void handleDeleteAddress(long id) {
+        // Validation: check address exists (will throw if not found)
         Address a = this.fetchAddressById(id);
-        if (a != null) {
+        
+        try {
             a.setIsActive(false);
             this.addressRepository.save(a);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể xóa address: " + e.getMessage());
         }
     }
 

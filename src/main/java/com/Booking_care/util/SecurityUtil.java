@@ -57,12 +57,17 @@ public class SecurityUtil {
         Instant now = Instant.now();
         Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
 
+        // Tạo list authorities từ role
+        List<String> authorities = new ArrayList<>();
+        authorities.add("ROLE_" + dto.getUserLogin().getRole());
+
         // @formatter:off
         JwtClaimsSet claims = JwtClaimsSet.builder()
         .issuedAt(now)
         .expiresAt(validity)
         .subject(username)
         .claim("user", dto.getUserLogin())
+        .claim("scope", authorities)
         .build();
         
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();

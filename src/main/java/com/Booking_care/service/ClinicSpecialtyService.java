@@ -19,6 +19,8 @@ import com.Booking_care.domain.dto.ClinicSpecialtyDTO.ResClinicSpecialtyForSpeci
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.ClinicSpecialtyRepository;
 import com.Booking_care.repository.SpecialtyRepository;
+import com.Booking_care.mapper.specialty.SpecialtyMapper;
+import com.Booking_care.mapper.clinic.ClinicMapper;
 
 @Service
 public class ClinicSpecialtyService {
@@ -40,11 +42,21 @@ public class ClinicSpecialtyService {
     }
 
     public boolean isClinicExits(long id) {
-        return this.clinicService.fetchClinicById(id) != null;
+        try {
+            this.clinicService.fetchClinicById(id);
+            return true;
+        } catch (IdInvalidException e) {
+            return false;
+        }
     }
 
     public boolean isSpecialtyExits(long id) {
-        return this.specialtyService.fetchSpecialtyById(id) != null;
+        try {
+            this.specialtyService.fetchSpecialtyById(id);
+            return true;
+        } catch (IdInvalidException e) {
+            return false;
+        }
     }
 
     public ResultPaginationDTO fetchAllClinicSpecialty(Pageable pageable) {
@@ -75,10 +87,8 @@ public class ClinicSpecialtyService {
 
     public ResultPaginationDTO fetchClinicSpecialtyByClinicId(long clinicId, Pageable pageable)
             throws IdInvalidException {
+        // Validation: clinicService sẽ throw exception nếu không tìm thấy
         Clinic clinic = this.clinicService.fetchClinicById(clinicId);
-        if (clinic == null) {
-            throw new IdInvalidException("ClinicId không tồn tại");
-        }
         Page<ClinicSpecialty> page = this.clinicSpecialtyRepository.findByClinic_Id(clinicId, pageable);
 
         ResultPaginationDTO res = new ResultPaginationDTO();
@@ -97,7 +107,7 @@ public class ClinicSpecialtyService {
         cs.setClinicName(clinic.getName());
 
         List<ResSpecialtyDTO> listSpec = page.getContent().stream()
-                .map(spec -> this.specialtyService.convertToResDTO(spec.getSpecialty()))
+                .map(spec -> SpecialtyMapper.toResSpecialtyDTO(spec.getSpecialty()))
                 .collect(Collectors.toList());
 
         cs.setSpecialties(listSpec);
@@ -110,10 +120,8 @@ public class ClinicSpecialtyService {
 
     public ResultPaginationDTO fetchClinicSpecialtyBySpecialtyId(long specialtyId, Pageable pageable)
             throws IdInvalidException {
+        // Validation: specialtyService sẽ throw exception nếu không tìm thấy
         Specialty specialty = this.specialtyService.fetchSpecialtyById(specialtyId);
-        if (specialty == null) {
-            throw new IdInvalidException("SpecialtyId không tồn tại");
-        }
         Page<ClinicSpecialty> page = this.clinicSpecialtyRepository.findBySpecialty_Id(specialtyId, pageable);
 
         ResultPaginationDTO res = new ResultPaginationDTO();
@@ -132,7 +140,7 @@ public class ClinicSpecialtyService {
         cs.setSpecialtyName(specialty.getName());
 
         List<ResClinicDTO> listSpec = page.getContent().stream()
-                .map(spec -> this.clinicService.convertToClinicDTO(spec.getClinic()))
+                .map(spec -> ClinicMapper.toResClinicDTO(spec.getClinic()))
                 .collect(Collectors.toList());
 
         cs.setSpecialties(listSpec);
@@ -152,23 +160,24 @@ public class ClinicSpecialtyService {
     }
 
     public void handleAddSpecialtiesForClinic(ReqClinicSpecialtyDTO req) throws IdInvalidException {
+        // Validation: clinicService sẽ throw exception nếu không tìm thấy
         Clinic clinic = this.clinicService.fetchClinicById(req.getClinicId());
-        if (clinic == null) {
-            throw new IdInvalidException("ClinicId không tồn tại");
-        }
 
-        List<Specialty> specialties = this.specialtyRepository.findAllById(req.getSpecialties());
+        try {
+            List<Specialty> specialties = this.specialtyRepository.findAllById(req.getSpecialties());
 
-        for (Specialty specialty : specialties) {
-            boolean exist = this.clinicSpecialtyRepository.existsByClinicAndSpecialty(clinic, specialty);
-            if (!exist) {
-                ClinicSpecialty cs = new ClinicSpecialty();
-                cs.setClinic(clinic);
-                cs.setSpecialty(specialty);
-                this.clinicSpecialtyRepository.save(cs);
+            for (Specialty specialty : specialties) {
+                boolean exist = this.clinicSpecialtyRepository.existsByClinicAndSpecialty(clinic, specialty);
+                if (!exist) {
+                    ClinicSpecialty cs = new ClinicSpecialty();
+                    cs.setClinic(clinic);
+                    cs.setSpecialty(specialty);
+                    this.clinicSpecialtyRepository.save(cs);
+                }
             }
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể thêm specialties cho clinic: " + e.getMessage());
         }
-
     }
 
     @Transactional

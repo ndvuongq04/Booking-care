@@ -4,14 +4,11 @@ import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import com.Booking_care.controller.*;
 import com.Booking_care.domain.Account;
 import com.Booking_care.domain.Clinic;
 import com.Booking_care.domain.Doctor;
@@ -22,6 +19,9 @@ import com.Booking_care.domain.dto.DoctorDTO.UpdateDoctorDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.DoctorRepository;
 import com.Booking_care.service.specification.DoctorSpecs;
+import com.Booking_care.util.error.IdInvalidException;
+import com.Booking_care.mapper.doctor.DoctorMapper;
+import com.Booking_care.domain.enums.RoleName;
 
 @Service
 public class DoctorService {
@@ -30,15 +30,18 @@ public class DoctorService {
     private final AccountService accountService;
     private final ClinicService clinicService;
     private final SpecialtyService specialtyService;
+    private final AccountProfile accountProfile;
 
     public DoctorService(DoctorRepository doctorRepository,
             AccountService accountService,
             ClinicService clinicService,
-            SpecialtyService specialtyService) {
+            SpecialtyService specialtyService,
+            AccountProfile accountProfile) {
         this.doctorRepository = doctorRepository;
         this.clinicService = clinicService;
         this.accountService = accountService;
         this.specialtyService = specialtyService;
+        this.accountProfile = accountProfile;
     }
 
     public boolean isAccountExits(long id) {
@@ -50,72 +53,86 @@ public class DoctorService {
     }
 
     public Doctor handleCreateDoctor(Doctor doctor) {
-        return this.doctorRepository.save(doctor);
-    }
+        // Validation 1: Check account exists
+        Account account = this.accountService.fetchAccountById(doctor.getAccount().getId());
 
-    public ResDoctorDTO convertToDoctorDTO(Doctor doctor) {
-        if (doctor == null)
-            return null;
-
-        ResDoctorDTO dto = new ResDoctorDTO();
-        dto.setId(doctor.getId());
-        dto.setDegree(doctor.getDegree() != null ? doctor.getDegree().name() : null);
-        dto.setIsActive(doctor.getIsActive());
-        dto.setCreateAt(doctor.getCreateAt());
-        dto.setUpdateAt(doctor.getUpdateAt());
-        dto.setDescription(doctor.getDescription());
-        dto.setCost((doctor.getCost()));
-
-        if (doctor.getAccount() != null) {
-            dto.setAccount(this.accountService.convertToResAccountDTO(doctor.getAccount()));
+        // Validation 2: Check account has DOCTOR role - QUAN TRỌNG!
+        boolean hasRole = this.accountProfile.accountHasRole(account.getId(), RoleName.DOCTOR);
+        if (!hasRole) {
+            throw new IdInvalidException(
+                    "Account id: " + account.getId() + " không có quyền " + RoleName.DOCTOR);
         }
 
-        if (doctor.getClinic() != null) {
-            dto.setClinic(this.clinicService.convertToClinicDTO(doctor.getClinic()));
+        // Validation 3: Check account not already used for other profiles
+        this.accountProfile.accountUsed(account.getId());
+
+        // Validation 4: Check account not already used by another doctor
+        if (this.doctorRepository.existsByAccountId(account.getId())) {
+            throw new IdInvalidException(
+                    "Account với id " + account.getId() + " đã được sử dụng cho một bác sĩ khác");
         }
 
-        if (doctor.getSpecialty() != null) {
-            dto.setSpecialty(this.specialtyService.convertToResDTO(doctor.getSpecialty()));
-        }
+        // Validation 5: Check clinic exists (will throw if not found)
+        Clinic clinic = this.clinicService.fetchClinicById(doctor.getClinic().getId());
 
-        return dto;
+        // Validation 6: Check specialty exists (will throw if not found)
+        Specialty specialty = this.specialtyService.fetchSpecialtyById(doctor.getSpecialty().getId());
+
+        try {
+            doctor.setAccount(account);
+            doctor.setClinic(clinic);
+            doctor.setSpecialty(specialty);
+            return this.doctorRepository.save(doctor);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể tạo doctor: " + e.getMessage());
+        }
     }
 
     public Doctor fetchDoctorById(long id) {
-        Optional<Doctor> doc = this.doctorRepository.findById(id);
-        if (doc.isPresent()) {
-            return doc.get();
-        }
-        return null;
+        return this.doctorRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("Doctor với id " + id + " không tồn tại"));
     }
 
     public Doctor handleUpdateDoctor(UpdateDoctorDTO doctor) {
+        // Validation: check doctor exists (will throw if not found)
         Doctor currentDoctor = this.fetchDoctorById(doctor.getId());
-        if (currentDoctor != null) {
+
+        // Validation: check clinic exists (will throw if not found)
+        Clinic clinic = this.clinicService.fetchClinicById(doctor.getClinic().getId());
+
+        // Validation: check specialty exists (will throw if not found)
+        Specialty specialty = this.specialtyService.fetchSpecialtyById(doctor.getSpecialty().getId());
+
+        try {
             currentDoctor.setCost(doctor.getCost());
             currentDoctor.setDegree(doctor.getDegree());
             currentDoctor.setDescription(doctor.getDescription());
             currentDoctor.setIsActive(doctor.getIsActive());
 
             if (doctor.getClinic() != null) {
-                Clinic clinic = this.clinicService.fetchClinicById(doctor.getClinic().getId());
-                currentDoctor.setClinic(clinic != null ? clinic : null);
+                currentDoctor.setClinic(clinic);
             }
 
             if (doctor.getSpecialty() != null) {
-                Specialty specialty = this.specialtyService.fetchSpecialtyById(doctor.getSpecialty().getId());
-                currentDoctor.setSpecialty(specialty != null ? specialty : null);
+                currentDoctor.setSpecialty(specialty);
             }
 
-            currentDoctor = this.doctorRepository.save(currentDoctor);
-
+            return this.doctorRepository.save(currentDoctor);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể cập nhật doctor: " + e.getMessage());
         }
-        return currentDoctor;
     }
 
-    public void handleDeleteDoctor(Doctor d) {
-        d.setIsActive(false);
-        this.doctorRepository.save(d);
+    public void handleDeleteDoctor(long id) {
+        // Validation: check doctor exists (will throw if not found)
+        Doctor d = this.fetchDoctorById(id);
+
+        try {
+            d.setIsActive(false);
+            this.doctorRepository.save(d);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể xóa doctor: " + e.getMessage());
+        }
     }
 
     public ResultPaginationDTO fetchAllDoctor(Pageable pageable) {
@@ -133,7 +150,7 @@ public class DoctorService {
 
         // convert
         List<ResDoctorDTO> listDoc = page.getContent().stream()
-                .map(item -> this.convertToDoctorDTO(item))
+                .map(DoctorMapper::toResDoctorDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listDoc);
@@ -215,7 +232,7 @@ public class DoctorService {
 
         // convert
         List<ResDoctorDTO> listDoc = listPage.getContent().stream()
-                .map(item -> this.convertToDoctorDTO(item))
+                .map(DoctorMapper::toResDoctorDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listDoc);

@@ -3,7 +3,6 @@ package com.Booking_care.service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.Booking_care.domain.Bill;
@@ -11,7 +10,6 @@ import com.Booking_care.domain.BillDetail;
 import com.Booking_care.domain.Services;
 import com.Booking_care.domain.dto.BillDTO.ReqBillDTO;
 import com.Booking_care.domain.dto.BillDetailDTO.ReqBillDetailDTO;
-import com.Booking_care.domain.dto.BillDetailDTO.ResBillDetailDTO;
 import com.Booking_care.repository.BillDetailRepository;
 import com.Booking_care.util.error.IdInvalidException;
 
@@ -68,18 +66,4 @@ public class BillDetailService {
         return this.billDetailRepository.findAllByBillId(billId);
     }
 
-    public ResBillDetailDTO toResBillDetailDTO(BillDetail detail) {
-        if (detail == null)
-            return null;
-
-        ResBillDetailDTO dto = new ResBillDetailDTO();
-        dto.setId(detail.getId());
-        dto.setService(this.servicesService.handleConvertToResServicesDTO(detail.getService()));
-        dto.setQuantity(detail.getQuantity());
-        dto.setServiceCost(detail.getServiceCost());
-        dto.setTotalService(detail.getTotalService());
-        dto.setCreateAt(detail.getCreateAt());
-        dto.setUpdateAt(detail.getUpdateAt());
-        return dto;
-    }
 }

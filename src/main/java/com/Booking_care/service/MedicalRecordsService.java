@@ -19,6 +19,7 @@ import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.MedicalRecordsRepository;
 import com.Booking_care.service.specification.MedicalRecordSpecs;
 import com.Booking_care.util.error.IdInvalidException;
+import com.Booking_care.mapper.medicalrecord.MedicalRecordMapper;
 
 @Service
 public class MedicalRecordsService {
@@ -56,7 +57,7 @@ public class MedicalRecordsService {
 
         // convert
         List<ResMedicalRecordDTO> listAcc = page.getContent().stream()
-                .map(item -> this.convertToMedicalRecordDTO(item))
+                .map(MedicalRecordMapper::toResMedicalRecordDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listAcc);
@@ -65,101 +66,54 @@ public class MedicalRecordsService {
         return res;
     }
 
-    public static ResMedicalRecordDTO convertToMedicalRecordDTO(MedicalRecord record) {
-        if (record == null)
-            return null;
-
-        ResMedicalRecordDTO dto = new ResMedicalRecordDTO();
-        dto.setId(record.getId());
-        dto.setDescription(record.getDescription());
-        dto.setCreateAt(record.getCreateAt());
-        dto.setUpdateAt(record.getUpdateAt());
-
-        // Patient
-        if (record.getPatient() != null) {
-            ResMedicalRecordDTO.PatientDTO pDto = new ResMedicalRecordDTO.PatientDTO();
-            pDto.setId(record.getPatient().getId());
-            pDto.setName(record.getPatient().getAccount().getName());
-            dto.setPatient(pDto);
-        }
-
-        // Doctor
-        if (record.getDoctor() != null) {
-            ResMedicalRecordDTO.DoctorDTO dDto = new ResMedicalRecordDTO.DoctorDTO();
-            dDto.setId(record.getDoctor().getId());
-            dDto.setName(record.getDoctor().getAccount().getName());
-            dDto.setDegree(record.getDoctor().getDegree().name());
-            dto.setDoctor(dDto);
-        }
-
-        // Clinic
-        if (record.getClinic() != null) {
-            ResMedicalRecordDTO.ClinicDTO cDto = new ResMedicalRecordDTO.ClinicDTO();
-            cDto.setId(record.getClinic().getId());
-            cDto.setName(record.getClinic().getName());
-            dto.setClinic(cDto);
-        }
-
-        // Specialty
-        if (record.getSpecialty() != null) {
-            ResMedicalRecordDTO.SpecialtyDTO sDto = new ResMedicalRecordDTO.SpecialtyDTO();
-            sDto.setId(record.getSpecialty().getId());
-            sDto.setName(record.getSpecialty().getName());
-            dto.setSpecialty(sDto);
-        }
-
-        return dto;
-    }
 
     public MedicalRecord handleCreateMedicalRecord(ReqMedicalRecordDTO record) throws IdInvalidException {
-        MedicalRecord mRecord = new MedicalRecord();
-        mRecord.setDescription(record.getDescription());
-
-        // fetch patient
+        // Validation: các fetch methods sẽ throw exception nếu không tìm thấy
         Patient patient = this.patientService.fetchPatientById(record.getPatientId());
-        mRecord.setPatient(patient);
-
-        // fetch doctor
         Doctor doctor = this.doctorService.fetchDoctorById(record.getDoctorId());
-        mRecord.setDoctor(doctor);
-
-        // fetch clinic
         Clinic clinic = this.clinicService.fetchClinicById(record.getClinicId());
-        mRecord.setClinic(clinic);
-
-        // fetch specialty
         Specialty specialty = this.specialtyService.fetchSpecialtyById(record.getSpecialtyId());
-        mRecord.setSpecialty(specialty);
 
-        return this.medicalRecordsRepository.save(mRecord);
+        try {
+            MedicalRecord mRecord = new MedicalRecord();
+            mRecord.setDescription(record.getDescription());
+            mRecord.setPatient(patient);
+            mRecord.setDoctor(doctor);
+            mRecord.setClinic(clinic);
+            mRecord.setSpecialty(specialty);
+
+            return this.medicalRecordsRepository.save(mRecord);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể tạo medical record: " + e.getMessage());
+        }
     }
 
     public MedicalRecord fetchMedicalRecordById(Long id) throws IdInvalidException {
-        return this.medicalRecordsRepository.findById(id).orElse(null);
+        return this.medicalRecordsRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("MedicalRecord với id " + id + " không tồn tại"));
     }
 
     public MedicalRecord handleUpdateMedicalRecord(Long id, ReqMedicalRecordDTO record) throws IdInvalidException {
+        // Validation: check medical record exists (will throw if not found)
         MedicalRecord existing = fetchMedicalRecordById(id);
 
-        existing.setDescription(record.getDescription());
-
-        // fetch patient
+        // Validation: các fetch methods sẽ throw exception nếu không tìm thấy
         Patient patient = this.patientService.fetchPatientById(record.getPatientId());
-        existing.setPatient(patient);
-
-        // fetch doctor
         Doctor doctor = this.doctorService.fetchDoctorById(record.getDoctorId());
-        existing.setDoctor(doctor);
-
-        // fetch clinic
         Clinic clinic = this.clinicService.fetchClinicById(record.getClinicId());
-        existing.setClinic(clinic);
-
-        // fetch specialty
         Specialty specialty = this.specialtyService.fetchSpecialtyById(record.getSpecialtyId());
-        existing.setSpecialty(specialty);
 
-        return medicalRecordsRepository.save(existing);
+        try {
+            existing.setDescription(record.getDescription());
+            existing.setPatient(patient);
+            existing.setDoctor(doctor);
+            existing.setClinic(clinic);
+            existing.setSpecialty(specialty);
+
+            return medicalRecordsRepository.save(existing);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể cập nhật medical record: " + e.getMessage());
+        }
     }
 
     public ResultPaginationDTO fetchAllMedicalRecordsByDoctor(Pageable pageable, long doctorId) {
@@ -177,7 +131,7 @@ public class MedicalRecordsService {
 
         // convert
         List<ResMedicalRecordDTO> listAcc = page.getContent().stream()
-                .map(item -> this.convertToMedicalRecordDTO(item))
+                .map(MedicalRecordMapper::toResMedicalRecordDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listAcc);
@@ -218,7 +172,7 @@ public class MedicalRecordsService {
 
         // convert
         List<ResMedicalRecordDTO> listMed = page.getContent().stream()
-                .map(item -> this.convertToMedicalRecordDTO(item))
+                .map(MedicalRecordMapper::toResMedicalRecordDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listMed);

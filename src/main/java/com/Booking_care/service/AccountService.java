@@ -11,10 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.Booking_care.domain.Account;
-import com.Booking_care.domain.Otp;
 import com.Booking_care.domain.Role;
 import com.Booking_care.domain.dto.ResCloudinaryDTO;
 import com.Booking_care.domain.dto.AccountDTO.AccountCriteriaDTO;
@@ -27,6 +24,7 @@ import com.Booking_care.repository.AccountRepository;
 import com.Booking_care.service.specification.AccountSpecs;
 import com.Booking_care.util.error.IdInvalidException;
 import com.Booking_care.util.error.StorageException;
+import com.Booking_care.mapper.account.AccountMapper;
 
 @Service
 public class AccountService {
@@ -34,44 +32,52 @@ public class AccountService {
     private final RoleService roleService;
     private final PasswordEncoder passwordEncoder;
     private final CloudinaryService cloudinaryService;
-    private final EmailService emailService;
-    private final OtpService otpService;
 
     private final String folder = "booking_care/account/";
 
-    public AccountService(AccountRepository accountRepository,
-            RoleService roleService,
-            PasswordEncoder passwordEncoder,
-            CloudinaryService cloudinaryService,
-            EmailService emailService,
-            OtpService otpService) {
+    public AccountService(AccountRepository accountRepository, RoleService roleService, PasswordEncoder passwordEncoder,
+            CloudinaryService cloudinaryService) {
         this.accountRepository = accountRepository;
         this.roleService = roleService;
         this.passwordEncoder = passwordEncoder;
         this.cloudinaryService = cloudinaryService;
-        this.emailService = emailService;
-        this.otpService = otpService;
     }
 
     public boolean isEmailExits(String email) {
         return this.accountRepository.existsByEmail(email);
     }
 
+    public void validateEmailNotExists(String email) {
+        if (this.accountRepository.existsByEmail(email)) {
+            throw new IdInvalidException("Email " + email + "đã tồn tại, vui lòng sử dụng email khác.");
+        }
+    }
+
     public Account handleCreateAccount(CreateAccountDTO dto) {
-        Account acc = new Account();
-        acc.setName(dto.getName());
-        acc.setEmail(dto.getEmail());
-        acc.setPassword(this.passwordEncoder.encode(dto.getPassword()));
-        acc.setPhoneNumber(dto.getPhoneNumber());
-        acc.setAddress(dto.getAddress());
-        acc.setGender(dto.getGender());
-        acc.setCccd(dto.getCccd());
+        // Validation: check email exists
+        if (this.accountRepository.existsByEmail(dto.getEmail())) {
+            throw new IdInvalidException(
+                    "Email " + dto.getEmail() + " đã tồn tại, Vui lòng sử dụng email khác.");
+        }
 
-        // set role
-        Role role = this.roleService.fetchRoleById(dto.getRoleId());
-        acc.setRole(role);
+        try {
+            Account acc = new Account();
+            acc.setName(dto.getName());
+            acc.setEmail(dto.getEmail());
+            acc.setPassword(this.passwordEncoder.encode(dto.getPassword()));
+            acc.setPhoneNumber(dto.getPhoneNumber());
+            acc.setAddress(dto.getAddress());
+            acc.setGender(dto.getGender());
+            acc.setCccd(dto.getCccd());
 
-        return this.accountRepository.save(acc);
+            // set role
+            Role role = this.roleService.fetchRoleById(dto.getRoleId());
+            acc.setRole(role);
+
+            return this.accountRepository.save(acc);
+        } catch (Exception e) {
+            throw new StorageException("Không thể tạo account: " + e.getMessage(), e);
+        }
     }
 
     public ResultPaginationDTO fetchAllAccount(Pageable pageable) {
@@ -89,7 +95,7 @@ public class AccountService {
 
         // convert
         List<ResAccountDTO> listAcc = page.getContent().stream()
-                .map(item -> this.convertToResAccountDTO(item))
+                .map(AccountMapper::toResAccountDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listAcc);
@@ -98,45 +104,19 @@ public class AccountService {
         return res;
     }
 
-    public ResAccountDTO convertToResAccountDTO(Account acc) {
-        if (acc == null)
-            return null;
-
-        ResAccountDTO res = new ResAccountDTO();
-        ResAccountDTO.RoleAccount roleAccount = new ResAccountDTO.RoleAccount();
-
-        if (acc.getRole() != null) {
-            roleAccount.setId(acc.getRole().getId());
-            roleAccount.setName(acc.getRole().getName());
-            res.setRole(roleAccount);
-        }
-
-        res.setId(acc.getId());
-        res.setName(acc.getName());
-        res.setEmail(acc.getEmail());
-        res.setPhoneNumber(acc.getPhoneNumber());
-        res.setGender(acc.getGender());
-        res.setAddress(acc.getAddress());
-        res.setBirth(acc.getBirth());
-        res.setCccd(acc.getCccd());
-        res.setAvatar(acc.getAvatar());
-        res.setCreateAt(acc.getCreateAt());
-        res.setUpdateAt(acc.getUpdateAt());
-
-        return res;
-    }
-
     public Account fetchAccountById(long id) {
         Optional<Account> accOptional = this.accountRepository.findById(id);
-        if (accOptional.isPresent()) {
-            return accOptional.get();
+        if (!accOptional.isPresent()) {
+            throw new IdInvalidException("Account với id " + id + " không tồn tại");
         }
-        return null;
+        return accOptional.get();
     }
 
-    public Account handleUpdateAccount(UpdateAccountDTO acc) throws StorageException {
+    public Account handleUpdateAccount(UpdateAccountDTO acc) {
+        // Validation: check account exists (throws exception if not found)
         Account currentAcc = this.fetchAccountById(acc.getId());
-        if (currentAcc != null) {
+
+        try {
             currentAcc.setName(acc.getName());
             currentAcc.setPhoneNumber(acc.getPhoneNumber());
             currentAcc.setAddress(acc.getAddress());
@@ -152,20 +132,32 @@ public class AccountService {
 
             // upload image
             if (acc.getFile() != null && !acc.getFile().isEmpty()) {
-                ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(acc.getFile(), folder,
-                        String.valueOf(currentAcc.getId()));
-                currentAcc.setAvatar(resImg.getUrl());
-
+                try {
+                    ResCloudinaryDTO resImg = cloudinaryService.uploadToFolder(acc.getFile(), folder,
+                            String.valueOf(currentAcc.getId()));
+                    currentAcc.setAvatar(resImg.getUrl());
+                } catch (Exception e) {
+                    throw new StorageException("Không thể upload ảnh: " + e.getMessage(), e);
+                }
             }
 
-            currentAcc = this.accountRepository.save(currentAcc);
+            return this.accountRepository.save(currentAcc);
+        } catch (StorageException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new StorageException("Không thể cập nhật account: " + e.getMessage(), e);
         }
-
-        return currentAcc; // null
     }
 
     public void handleDeleteAccount(long id) {
-        this.accountRepository.deleteById(id);
+        // Validation: check account exists (throws exception if not found)
+        this.fetchAccountById(id);
+
+        try {
+            this.accountRepository.deleteById(id);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể xóa account: " + e.getMessage());
+        }
     }
 
     public ResultPaginationDTO getAccountSearch(AccountCriteriaDTO accountCriteriaDTO, Pageable pageable) {
@@ -184,7 +176,7 @@ public class AccountService {
 
         // convert
         List<ResAccountDTO> listAcc = listPage.getContent().stream()
-                .map(item -> this.convertToResAccountDTO(item))
+                .map(AccountMapper::toResAccountDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listAcc);
@@ -251,25 +243,55 @@ public class AccountService {
         }
     }
 
-    public Account getAccountByRefreshTokenAndEmail(String token, String email) {
-        return this.accountRepository.findByRefreshTokenAndEmail(token, email);
+    public void handleLogout(String email) {
+        if (email == null || email.equals("")) {
+            throw new IdInvalidException("Access Token không hợp lệ");
+        }
+
+        // update refresh token = null
+        this.updateToken(null, email);
     }
 
-    public void handleResetPassword(long id, String newPass) {
+    public Account getAccountByRefreshTokenAndEmail(String token, String email) {
+        if (token == null || token.equals("abc")) {
+            throw new IdInvalidException("Bạn không có refresh token ở cookie");
+        }
+
+        Account account = this.accountRepository.findByRefreshTokenAndEmail(token, email);
+        if (account == null) {
+            throw new IdInvalidException("Refresh Token không hợp lệ");
+        }
+
+        return account;
+    }
+
+    public void handleResetPassword(long id, String newPass, String currentPassword) {
+        // Validation: check account exists (throws exception if not found)
         Account acc = this.fetchAccountById(id);
-        if (acc != null) {
+
+        if (!passwordEncoder.matches(currentPassword, acc.getPassword())) {
+            throw new IdInvalidException("Mật khẩu hiện tại không đúng");
+        }
+
+        try {
             acc.setPassword(passwordEncoder.encode(newPass));
-            acc = this.accountRepository.save(acc);
+            this.accountRepository.save(acc);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể đặt lại mật khẩu: " + e.getMessage());
         }
     }
 
-    public Account forgotPassword(ResetPasswordRequest reset) throws IdInvalidException {
+    public Account forgotPassword(ResetPasswordRequest reset) {
         Account acc = this.fetchAccountByEmail(reset.getEmail());
         if (acc == null) {
             throw new IdInvalidException("Email không tồn tại");
         }
-        acc.setPassword(passwordEncoder.encode(reset.getPassword()));
 
-        return this.accountRepository.save(acc);
+        try {
+            acc.setPassword(passwordEncoder.encode(reset.getPassword()));
+            return this.accountRepository.save(acc);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể đặt lại mật khẩu: " + e.getMessage());
+        }
     }
 }

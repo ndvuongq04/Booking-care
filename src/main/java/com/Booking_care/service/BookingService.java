@@ -3,8 +3,6 @@ package com.Booking_care.service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.YearMonth;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -31,11 +29,11 @@ import com.Booking_care.repository.BookingRepository;
 import com.Booking_care.service.specification.BookingSpecs;
 import com.Booking_care.util.error.BusinessException;
 import com.Booking_care.util.error.IdInvalidException;
+import com.Booking_care.mapper.booking.BookingMapper;
 
 @Service
 public class BookingService {
 
-    private final AccountService accountService;
     private final BookingRepository bookingRepository;
     private final TimeService timeService;
     private final DoctorService doctorService;
@@ -49,17 +47,14 @@ public class BookingService {
             TimeService timeService,
             DoctorService doctorService,
             ClinicService clinicService,
-            AccountService accountService,
             PatientService patientService,
             EmailService emailService) {
         this.bookingRepository = bookingRepository;
         this.timeService = timeService;
         this.doctorService = doctorService;
         this.clinicService = clinicService;
-        this.accountService = accountService;
         this.patientService = patientService;
         this.emailService = emailService;
-
     }
 
     public Booking createBooking(Booking b) {
@@ -81,7 +76,7 @@ public class BookingService {
 
         // convert
         List<ResBookingDTO> listBooking = page.getContent().stream()
-                .map(item -> this.convertToBookingDTO(item))
+                .map(BookingMapper::toResBookingDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listBooking);
@@ -91,25 +86,16 @@ public class BookingService {
     }
 
     public Booking getBookingById(long id) {
-        return this.bookingRepository.findById(id).orElse(null);
+        return this.bookingRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("Booking với id " + id + " không tồn tại"));
     }
 
-    public Booking createBooking(CreateBookingDTO dto) throws IdInvalidException, BusinessException {
+    public Booking createBooking(CreateBookingDTO dto) {
+        // Validation: check entities exist (will throw if not found)
         Doctor doctor = doctorService.fetchDoctorById(dto.getDoctorId());
-        if (doctor == null)
-            throw new IdInvalidException("Doctor với id " + dto.getDoctorId() + " không tồn tại");
-
         Clinic clinic = clinicService.fetchClinicById(dto.getClinicId());
-        if (clinic == null)
-            throw new IdInvalidException("Clinic với id " + dto.getClinicId() + " không tồn tại");
-
         Time time = timeService.fetchTimeById(dto.getTimeId());
-        if (time == null)
-            throw new IdInvalidException("Time với id " + dto.getTimeId() + " không tồn tại");
-
         Patient patient = patientService.fetchPatientById(dto.getPatientId());
-        if (patient == null)
-            throw new IdInvalidException("Patient với id " + dto.getPatientId() + " không tồn tại");
 
         // Check ngày hợp lệ
         this.validateBookingDate(dto.getAppointmentDate(), time);
@@ -136,21 +122,25 @@ public class BookingService {
             throw new BusinessException("Bệnh nhân đã có lịch tại khung giờ này");
         }
 
-        Booking booking = new Booking();
-        booking.setAppointmentDate(dto.getAppointmentDate());
-        booking.setDescription(dto.getDescription());
-        booking.setStatus(BookingStatusEnum.PENDING);
-        booking.setDoctor(doctor);
-        booking.setClinic(clinic);
-        booking.setTime(time);
-        booking.setPatient(patient);
+        try {
+            Booking booking = new Booking();
+            booking.setAppointmentDate(dto.getAppointmentDate());
+            booking.setDescription(dto.getDescription());
+            booking.setStatus(BookingStatusEnum.PENDING);
+            booking.setDoctor(doctor);
+            booking.setClinic(clinic);
+            booking.setTime(time);
+            booking.setPatient(patient);
 
-        Booking b = bookingRepository.save(booking);
+            Booking b = bookingRepository.save(booking);
 
-        // send email
-        this.sendEmailBooking(patient.getAccount(), b, "Xác nhận đặt lịch khám thành công", templateBookingSuccess);
+            // send email
+            this.sendEmailBooking(patient.getAccount(), b, "Xác nhận đặt lịch khám thành công", templateBookingSuccess);
 
-        return b;
+            return b;
+        } catch (Exception e) {
+            throw new BusinessException("Không thể tạo booking: " + e.getMessage());
+        }
     }
 
     public void sendEmailBooking(Account a, Booking b, String subTitle, String template) {
@@ -162,18 +152,11 @@ public class BookingService {
                 b);
     }
 
-    public Booking updateBooking(UpdateBookingDTO dto) throws IdInvalidException, BusinessException {
-        Booking existing = bookingRepository.findById(dto.getId()).orElse(null);
-        if (existing == null)
-            throw new IdInvalidException("Booking với id " + dto.getId() + " không tồn tại");
-
+    public Booking updateBooking(UpdateBookingDTO dto) {
+        // Validation: check entities exist (will throw if not found)
+        Booking existing = this.getBookingById(dto.getId());
         Clinic clinic = clinicService.fetchClinicById(dto.getClinicId());
-        if (clinic == null)
-            throw new IdInvalidException("Clinic với id " + dto.getClinicId() + " không tồn tại");
-
         Time time = timeService.fetchTimeById(dto.getTimeId());
-        if (time == null)
-            throw new IdInvalidException("Time với id " + dto.getTimeId() + " không tồn tại");
 
         // Check ngày hợp lệ
         this.validateBookingDate(dto.getAppointmentDate(), time);
@@ -189,15 +172,19 @@ public class BookingService {
             throw new BusinessException("Bác sĩ đã có lịch tại khung giờ này");
         }
 
-        existing.setClinic(clinic);
-        existing.setTime(time);
-        existing.setAppointmentDate(dto.getAppointmentDate());
-        existing.setDescription(dto.getDescription());
+        try {
+            existing.setClinic(clinic);
+            existing.setTime(time);
+            existing.setAppointmentDate(dto.getAppointmentDate());
+            existing.setDescription(dto.getDescription());
 
-        // reset status
-        existing.setStatus(BookingStatusEnum.PENDING);
+            // reset status
+            existing.setStatus(BookingStatusEnum.PENDING);
 
-        return bookingRepository.save(existing);
+            return bookingRepository.save(existing);
+        } catch (Exception e) {
+            throw new BusinessException("Không thể cập nhật booking: " + e.getMessage());
+        }
     }
 
     private void validateBookingDate(LocalDate appointmentDate, Time timeSlot) throws BusinessException {
@@ -223,65 +210,34 @@ public class BookingService {
     }
 
     public Booking cancelBooking(long id) {
-        Booking b = this.bookingRepository.findById(id).orElse(null);
+        // Validation: check booking exists (will throw if not found)
+        Booking b = this.getBookingById(id);
 
-        if (b != null) {
+        try {
             b.setStatus(BookingStatusEnum.CANCELLED);
             this.bookingRepository.save(b);
 
             Patient p = this.patientService.fetchPatientById(b.getPatient().getId());
             // send email
             this.sendEmailBooking(p.getAccount(), b, "Thông báo hủy lịch khám", templateBookingCancel);
+
+            return b;
+        } catch (Exception e) {
+            throw new BusinessException("Không thể hủy booking: " + e.getMessage());
         }
-
-        return b;
-    }
-
-    public ResBookingDTO convertToBookingDTO(Booking booking) {
-        if (booking == null)
-            return null;
-
-        ResBookingDTO dto = new ResBookingDTO();
-        dto.setId(booking.getId());
-        dto.setAppointmentDate(booking.getAppointmentDate());
-        dto.setDescription(booking.getDescription());
-        dto.setCreateAt(booking.getCreateAt());
-        dto.setUpdateAt(booking.getUpdateAt());
-        dto.setStatus(booking.getStatus());
-        dto.setCheckFeedback(booking.getCheckFeedback());
-
-        if (booking.getDoctor() != null) {
-            dto.setDoctor(this.doctorService.convertToDoctorDTO(booking.getDoctor()));
-        }
-
-        if (booking.getPatient() != null) {
-            dto.setPatient(this.patientService.convertToResPatientDTO(booking.getPatient()));
-        }
-
-        if (booking.getClinic() != null) {
-            dto.setClinic(this.clinicService.convertToClinicDTO(booking.getClinic()));
-        }
-
-        if (booking.getTime() != null) {
-            dto.setTime(new ResBookingDTO.ResTimeDTO(
-                    booking.getTime().getId(),
-                    booking.getTime().getStart(),
-                    booking.getTime().getEnd()));
-        }
-
-        return dto;
     }
 
     public Booking updateBookingStatus(long id, BookingStatusEnum status) {
+        // Validation: check booking exists (will throw if not found)
         Booking b = this.getBookingById(id);
 
-        if (b != null) {
+        try {
             b.setStatus(status);
             b.setUpdateAt(Instant.now());
-
-            this.bookingRepository.save(b);
+            return this.bookingRepository.save(b);
+        } catch (Exception e) {
+            throw new BusinessException("Không thể cập nhật trạng thái booking: " + e.getMessage());
         }
-        return b;
     }
 
     public ResultPaginationDTO fetchBookingByInstanceId(long id, Pageable pageable, Object obj) {
@@ -311,7 +267,7 @@ public class BookingService {
 
         // convert
         List<ResBookingDTO> listBooking = page.getContent().stream()
-                .map(item -> this.convertToBookingDTO(item))
+                .map(BookingMapper::toResBookingDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listBooking);
@@ -332,7 +288,7 @@ public class BookingService {
         meta.setTotals(page.getTotalElements());
 
         res.setMeta(meta);
-        res.setResult(page.getContent().stream().map(this::convertToBookingDTO).toList());
+        res.setResult(page.getContent().stream().map(BookingMapper::toResBookingDTO).toList());
 
         return res;
     }
@@ -395,7 +351,7 @@ public class BookingService {
 
         // convert
         List<ResBookingDTO> listBooking = page.getContent().stream()
-                .map(item -> this.convertToBookingDTO(item))
+                .map(BookingMapper::toResBookingDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listBooking);
@@ -438,7 +394,7 @@ public class BookingService {
 
         // convert
         List<ResBookingDTO> listBooking = page.getContent().stream()
-                .map(item -> this.convertToBookingDTO(item))
+                .map(BookingMapper::toResBookingDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listBooking);
@@ -484,7 +440,7 @@ public class BookingService {
 
         // convert
         List<ResBookingDTO> listBooking = page.getContent().stream()
-                .map(item -> this.convertToBookingDTO(item))
+                .map(BookingMapper::toResBookingDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listBooking);

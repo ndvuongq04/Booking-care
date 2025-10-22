@@ -11,6 +11,8 @@ import com.Booking_care.domain.Role;
 import com.Booking_care.domain.dto.ResRoleDTO;
 import com.Booking_care.domain.response.ResultPaginationDTO;
 import com.Booking_care.repository.RoleRepository;
+import com.Booking_care.util.error.IdInvalidException;
+import com.Booking_care.mapper.role.RoleMapper;
 
 @Service
 public class RoleService {
@@ -33,37 +35,53 @@ public class RoleService {
     }
 
     public Role handleCreateRole(Role role) {
-        return this.roleRepository.save(role);
+        // Validation: check name exists
+        if (this.roleRepository.existsByName(role.getName())) {
+            throw new IdInvalidException(
+                    "Role với name " + role.getName() + " đã tồn tại.");
+        }
+
+        try {
+            return this.roleRepository.save(role);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể tạo role: " + e.getMessage());
+        }
     }
 
     public Role fetchRoleById(long id) {
-        Optional<Role> role = this.roleRepository.findById(id);
-        if (role.isPresent()) {
-            return role.get();
-        }
-        return null;
+        return this.roleRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("Role với id " + id + " không tồn tại"));
     }
 
-    public ResRoleDTO convertToResRoleDTO(Role role) {
-        ResRoleDTO res = new ResRoleDTO();
-        res.setId(role.getId());
-        res.setName(role.getName());
-        res.setDescription(role.getDescription());
-
-        return res;
-    }
 
     public Role handleUpdateRole(Role reqRole) {
+        // Validation: check role exists (will throw if not found)
         Role role = this.fetchRoleById(reqRole.getId());
 
-        role.setName(reqRole.getName());
-        role.setDescription(reqRole.getDescription());
-        role = this.roleRepository.save(reqRole);
-        return role;
+        // Validation: check name exists for other roles
+        Role checkName = this.fetchRoleByName(reqRole.getName());
+        if (checkName != null && checkName.getId() != reqRole.getId()) {
+            throw new IdInvalidException("Role với name " + reqRole.getName() + " đã tồn tại.");
+        }
+
+        try {
+            role.setName(reqRole.getName());
+            role.setDescription(reqRole.getDescription());
+            return this.roleRepository.save(reqRole);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể cập nhật role: " + e.getMessage());
+        }
     }
 
     public void handleDeleteRoleById(long id) {
-        this.roleRepository.deleteById(id);
+        // Validation: check role exists (will throw if not found)
+        this.fetchRoleById(id);
+        
+        try {
+            this.roleRepository.deleteById(id);
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể xóa role: " + e.getMessage());
+        }
     }
 
     public ResultPaginationDTO fetchAllRole(Pageable pageable) {
@@ -81,7 +99,7 @@ public class RoleService {
 
         // convert
         List<ResRoleDTO> listRole = page.getContent().stream()
-                .map(item -> this.convertToResRoleDTO(item))
+                .map(RoleMapper::toResRoleDTO)
                 .collect(Collectors.toList());
 
         res.setResult(listRole);

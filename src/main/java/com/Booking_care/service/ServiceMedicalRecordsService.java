@@ -12,6 +12,7 @@ import com.Booking_care.domain.dto.ServiceMedicalRecordDTO.ReqServiceMedicalReco
 import com.Booking_care.domain.dto.ServiceMedicalRecordDTO.ResServiceMedicalRecordDTO;
 import com.Booking_care.repository.ServiceMedicalRecordsRepository;
 import com.Booking_care.util.error.IdInvalidException;
+import com.Booking_care.mapper.servicemedicalrecord.ServiceMedicalRecordMapper;
 
 @Service
 public class ServiceMedicalRecordsService {
@@ -30,60 +31,45 @@ public class ServiceMedicalRecordsService {
     }
 
     public ServiceMedicalRecord fetchById(Long id) throws IdInvalidException {
-        return serviceMedicalRecordsRepository.findById(id).orElse(null);
+        return serviceMedicalRecordsRepository.findById(id)
+                .orElseThrow(() -> new IdInvalidException("ServiceMedicalRecord với id " + id + " không tồn tại"));
     }
 
-    public ResServiceMedicalRecordDTO toDto(ServiceMedicalRecord smr) {
-        ResServiceMedicalRecordDTO dto = new ResServiceMedicalRecordDTO();
-        dto.setId(smr.getId());
-        dto.setCreateAt(smr.getCreateAt());
-        dto.setUpdateAt(smr.getUpdateAt());
-
-        if (smr.getService() != null) {
-            ResServiceMedicalRecordDTO.ServiceDTO sDto = new ResServiceMedicalRecordDTO.ServiceDTO();
-            sDto.setId(smr.getService().getId());
-            sDto.setName(smr.getService().getName());
-            sDto.setCost(smr.getService().getCost());
-            sDto.setDescription(smr.getService().getDescription());
-            dto.setService(sDto);
-        }
-        return dto;
-    }
 
     public List<ResServiceMedicalRecordDTO> getServicesByMedicalRecordId(Long medicalRecordId)
             throws IdInvalidException {
         this.medicalRecordsService.fetchMedicalRecordById(medicalRecordId);
 
         List<ServiceMedicalRecord> list = serviceMedicalRecordsRepository.findByMedicalRecordId(medicalRecordId);
-        return list.stream().map(item -> this.toDto(item)).toList();
+        return list.stream().map(ServiceMedicalRecordMapper::toResServiceMedicalRecordDTO).toList();
     }
 
     @Transactional
     public List<ServiceMedicalRecord> addServicesToMedicalRecord(ReqServiceMedicalRecordDTO dto)
             throws IdInvalidException {
-
+        // Validation: check medical record exists (will throw if not found)
         MedicalRecord medicalRecord = this.medicalRecordsService.fetchMedicalRecordById(dto.getMedicalRecordId());
-        if (medicalRecord == null) {
-            throw new IdInvalidException("MedicalRecord với id : " + dto.getMedicalRecordId() + " không tồn tại");
-        }
 
-        List<ServiceMedicalRecord> result = new ArrayList<>();
+        try {
+            List<ServiceMedicalRecord> result = new ArrayList<>();
 
-        for (Long serviceId : dto.getServiceIds()) {
-            Services service = this.servicesService.fetchServicesById(serviceId);
+            for (Long serviceId : dto.getServiceIds()) {
+                // Validation: check service exists (will throw if not found)
+                Services service = this.servicesService.fetchServicesById(serviceId);
 
-            if (service == null) {
-                throw new IdInvalidException("Service với id : " + serviceId + " không tồn tại");
+                ServiceMedicalRecord smr = new ServiceMedicalRecord();
+                smr.setMedicalRecord(medicalRecord);
+                smr.setService(service);
+
+                result.add(serviceMedicalRecordsRepository.save(smr));
             }
 
-            ServiceMedicalRecord smr = new ServiceMedicalRecord();
-            smr.setMedicalRecord(medicalRecord);
-            smr.setService(service);
-
-            result.add(serviceMedicalRecordsRepository.save(smr));
+            return result;
+        } catch (IdInvalidException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IdInvalidException("Không thể thêm services vào medical record: " + e.getMessage());
         }
-
-        return result;
     }
 
 }
